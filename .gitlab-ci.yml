@@ -31,6 +31,3 @@ pages:
       - public
   only:
 - master
-    stages:
-  - compile
-  - test
