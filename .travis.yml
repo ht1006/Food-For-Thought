@@ -20,8 +20,6 @@ deploy:
   provider: script
   skip_cleanup: true
   script: '../.travis/publish.sh'
-  on:
-    tags: true
 cache:
   directories:
     - $HOME/.pub-cache
