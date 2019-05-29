@@ -14,6 +14,14 @@ before_script:
   - ./flutter/bin/flutter doctor
 script:
   - ./flutter/bin/flutter test
+before_deploy:
+  - chmod +x ./.travis/publish.sh 
+deploy:
+  provider: script
+  skip_cleanup: true
+  script: '../.travis/publish.sh'
+  on:
+    tags: true
 cache:
   directories:
     - $HOME/.pub-cache
