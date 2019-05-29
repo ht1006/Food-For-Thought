@@ -1,0 +1,14 @@
+stages:
+  - compile
+  - test
+
+compile_job:
+  stage: compile
+  script:
+    - make
+
+test_job:
+  stage: test
+  script:
+    - chmod +x tests
+    - ./tests
