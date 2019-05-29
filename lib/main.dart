@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 void main() => runApp(MyApp());
 
@@ -37,14 +38,24 @@ class IngredientsState extends State<Ingredients> {
   Widget _buildIngredients() {
     final List<String> ingredients
       = <String>['Fruit', 'Vegetables', 'Dairy', 'Meat', 'Spices'];
+    final List<IconData> icons
+      = <IconData>[FontAwesomeIcons.apple, FontAwesomeIcons.carrot, FontAwesomeIcons.cheese
+                  , FontAwesomeIcons.drumstickBite, FontAwesomeIcons.pepperHot];
     return ListView.separated(
         padding: const EdgeInsets.all(16.0),
         itemCount: ingredients.length,
         itemBuilder: (BuildContext context, int index) {
-          return Container(
-            height: 50,
-            child: Center(child: Text('${ingredients[index]}',
-                style: new TextStyle(fontSize: 20.0))),
+          return ListTile(
+            leading: Icon(icons[index]),
+            title: Text('${ingredients[index]}',
+                style: new TextStyle(fontSize: 20.0)),
+            trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Icon(Icons.add),
+                  Padding(padding: const EdgeInsets.all(10.0)),
+                  Icon(Icons.arrow_drop_down)
+                ]),
           );
         },
       separatorBuilder: (BuildContext context, int index) => const Divider(),
