@@ -5,14 +5,14 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 //example database
 final List<String> ingredients
 = <String>['Fruit', 'Vegetables', 'Dairy', 'Meat', 'Spices'];
-List<String> fruits = <String>['apple', 'orange', 'banana'];
-List<String> vegs = <String>['broccoli', 'carrots', 'aubergines', 'asparagus'];
-List<String> dairy = <String>['milk', 'almond milk'];
-List<String> meat = <String>['lamb', 'chicken', 'beef'];
-List<String> spices = <String>['chilli powder'];
+List<String> fruits = <String>['Apple', 'Orange', 'Banana'];
+List<String> vegs = <String>['Broccoli', 'Carrots', 'Aubergines', 'Asparagus'];
+List<String> dairy = <String>['Milk', 'Almond Milk'];
+List<String> meat = <String>['Lamb', 'Chicken', 'Beef'];
+List<String> spices = <String>['Chilli Powder'];
 final List<IconData> icons
-      = <IconData>[FontAwesomeIcons.appleAlt, FontAwesomeIcons.carrot, FontAwesomeIcons.cheese
-                  , FontAwesomeIcons.drumstickBite, FontAwesomeIcons.pepperHot];
+= <IconData>[FontAwesomeIcons.appleAlt, FontAwesomeIcons.carrot, FontAwesomeIcons.cheese
+  , FontAwesomeIcons.drumstickBite, FontAwesomeIcons.pepperHot];
 
 //main page
 void main() => runApp(new MaterialApp(home: new Home()));
@@ -21,15 +21,21 @@ class Home extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          leading: Icon(Icons.menu),
-          title: Text('Ingredients', style: new TextStyle(fontSize: 25.0)),
-          backgroundColor: Colors.teal,
-        ),
-        body: new ListView.builder(
-          itemBuilder: (BuildContext context, int index) {
-            return new ExpandableListView(index: index);
-            //return new ExpandableListView(title: '${ingredients[index]}', index: index);
+      appBar: AppBar(
+        leading: Icon(Icons.menu),
+        title: Text('Ingredients', style: new TextStyle(fontSize: 25.0)),
+        backgroundColor: Colors.teal,
+        actions: <Widget>[
+          IconButton(
+            icon: Icon(Icons.local_dining),
+            onPressed: () {},
+          ),
+        ],
+      ),
+      body: new ListView.builder(
+        itemBuilder: (BuildContext context, int index) {
+          return new ExpandableListView(index: index);
+          //return new ExpandableListView(title: '${ingredients[index]}', index: index);
         },
         itemCount: ingredients.length,
       ),
@@ -37,6 +43,7 @@ class Home extends StatelessWidget {
   }
 }
 
+//Ingredient dropdown
 class ExpandableListView extends StatefulWidget {
   //final String title;
   final int index;
@@ -45,7 +52,7 @@ class ExpandableListView extends StatefulWidget {
 
   @override
   _ExpandableListViewState createState() => new _ExpandableListViewState();
-  
+
 }
 
 class _ExpandableListViewState extends State<ExpandableListView> {
@@ -56,47 +63,98 @@ class _ExpandableListViewState extends State<ExpandableListView> {
     return new Container(
       margin: const EdgeInsets.only(left: 10.0),
       padding: const EdgeInsets.all(15.0),
-     child: new Column(
-       children: <Widget>[
-        new Container(
-          child: new Row(
-          children: <Widget>[
-            new Icon(icons[widget.index]),
-            new Text(
+      child: new Column(
+        children: <Widget>[
+          new Container(
+            child: new Row(
+              children: <Widget>[
+                new Icon(icons[widget.index]),
+                Padding(padding: const EdgeInsets.all(10.0)),
+                new Text(
                   ingredients[widget.index], style: TextStyle(fontSize: 20),
                 ),
-            new IconButton(icon: new Icon(
-              expandFlag ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-              size: 30.0,
+                new IconButton(icon: new Icon(
+                  expandFlag ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                  size: 30.0,
+                ),
+                    onPressed: () {
+                      setState(() {
+                        expandFlag = !expandFlag;
+                      });
+                    }),
+                new IconButton(icon: new Icon(Icons.add), onPressed: () => _asyncAddIngrDialog(context))
+              ],
             ),
-                onPressed: () {
-              setState(() {
-                expandFlag = !expandFlag;
-              });
-            }),
-          ],
-        ),
-        ),
-        new ExpandableContainer(
-            expanded: expandFlag,
-            index: getFoodTypeList(ingredients[widget.index]).length,
-            child: new ListView.builder(
-              itemBuilder: (BuildContext context, int index) {
-                return new Container(
-                  child: new ListTile(
-                    title: new Text(
-                      getFoodTypeList(ingredients[widget.index])[index],
+          ),
+          new ExpandableContainer(
+              expanded: expandFlag,
+              index: getFoodTypeList(ingredients[widget.index]).length,
+              child: new ListView.builder(
+                itemBuilder: (BuildContext context, int index) {
+                  return new Container(
+                    child: new ListTile(
+                      title: new Text(
+                        getFoodTypeList(ingredients[widget.index])[index],
+                      ),
                     ),
-                  ),
-                );},
-              itemCount: getFoodTypeList(ingredients[widget.index]).length,
-            ))
-      ],
-    ),
+                  );},
+                itemCount: getFoodTypeList(ingredients[widget.index]).length,
+              ))
+        ],
+      ),
     );
   }
-}
 
+  void _addIngredientDialog() {
+
+    Future<DateTime> selectedDate = showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2019),
+      lastDate: DateTime(2030),
+      builder: (BuildContext context, Widget child) {
+        return Theme(
+          data: ThemeData.dark(),
+          child: child,
+        );
+      },
+    );
+  }
+
+  Future<String> _asyncAddIngrDialog(BuildContext context) async {
+    String newIngredient = '';
+    return showDialog<String>(
+      context: context,
+      barrierDismissible: false, // dialog is dismissible with a tap on the barrier
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Add Ingredient'),
+          content: new Row(
+            children: <Widget>[
+              new Expanded(
+                  child: new TextField(
+                    autofocus: true,
+                    decoration: new InputDecoration(hintText: 'Enter Ingredient'),
+                    onChanged: (value) {
+                      newIngredient = value;
+                    },
+                  ))
+            ],
+          ),
+          actions: <Widget>[
+            FlatButton(
+              child: Text('Add'),
+              onPressed: () {
+                Navigator.of(context).pop(newIngredient);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+}
 
 class ExpandableContainer extends StatelessWidget {
   final bool expanded;
@@ -149,75 +207,3 @@ List<String> getFoodTypeList(String foodType) {
   }
   return lists;
 }
-
-
-
-
-
-
-
-
-
-
-//
-////Previous codes
-//  Widget _buildIngredients() {
-//    return ListView.separated(
-//        padding: const EdgeInsets.all(16.0),
-//        itemCount: ingredients.length,
-//        itemBuilder: (BuildContext context, int index) {
-//          return ListTile(
-//            leading: Icon(icons[index]),
-//            title: Text('${ingredients[index]}',
-//                style: new TextStyle(fontSize: 20.0)),
-//            trailing: Row(
-//                mainAxisSize: MainAxisSize.min,
-//                children: <Widget>[
-//                  Icon(Icons.add),
-//                  Padding(padding: const EdgeInsets.all(10.0)),
-//                  IconButton(icon: Icon(Icons.arrow_drop_down),
-//                      onPressed: () => new ExpandableIngredients(foodType: '${ingredients[index]}'))
-//                  ]),
-//          );
-//        },
-//      separatorBuilder: (BuildContext context, int index) => const Divider(),
-//    );
-//  }
-//
-//
-//class HeaderIngredients extends StatelessWidget {
-//  final foodType;
-//
-//  const HeaderIngredients({Key key, this.foodType}) : super(key:key);
-//  @override
-//  Widget build(BuildContext context) {
-//    return Scaffold(
-//
-//      body: ExpandableIngredients(foodType: foodType),
-//    );
-//  }
-//
-//}
-//
-//class ExpandableIngredients extends StatelessWidget {
-//  final String foodType;
-//
-//  const ExpandableIngredients({Key key, this.foodType}) : super(key: key);
-//
-//  @override
-//  Widget build(BuildContext context) {
-//    List<String> lists = getFoodTypeList(foodType);
-//    final list = List.generate(lists.length, (i) => lists[i]);
-//    return new ListView.builder(
-//      itemCount: 1,
-//      itemBuilder: (context, i) => ExpansionTile(
-//        title: new Text(foodType),
-//        children: list
-//            .map((val) => new ListTile(
-//          title: new Text(val),
-//        ))
-//            .toList(),
-//      ),
-//    );
-//  }
-//}
