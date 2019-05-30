@@ -40,8 +40,9 @@ before_deploy:
 #   - git config --local user.name "$GIT_RELEASE_USER_NAME"
 #   - git config --local user.email "$GIT_RELEASE_USER_EMAIL"
 deploy:
-  provider: heroku
-  api_key: $HEROKU_API_KEY
+  provider: releases
+  api_key: 
+    secure: 68ceb7d3-275f-4010-a2ae-0585d76a05e4
   app: "build/app/outputs/apk/app.apk"
   skip_cleanup: true
   on:
