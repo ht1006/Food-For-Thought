@@ -1,33 +1,65 @@
-language: generic
-os:
-  - linux
-sudo: true
-addons:
-  apt:
-    sources:
-      - ubuntu-toolchain-r-test 
-    packages:
-      - libstdc++6
-      - fonts-droid
-install:
-  - git clone https://github.com/flutter/flutter.git -b beta
-$FLUTTER_CHANNEL
-  - export PATH="$PATH:`pwd`/flutter/bin/cache/dart-sdk/bin"
-  - export PATH="$PATH:`pwd`/flutter/bin"
-  - flutter doctor -v
-  - flutter packages get
+matrix:
+  include:
+  #Run analyzer and test for the app
+    - language: generic
+      os:
+        - linux
+      sudo: true
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test 
+          packages:
+            - libstdc++6
+            - fonts-droid
+          before_script:
+            - git clone https://github.com/flutter/flutter.git
+            - export PATH=`pwd`/flutter/bin:`pwd`/flutter/bin/cache/dart-sdk/bin:$PATH
+            - flutter doctor
+            - pub global activate flutter_plugin_tools
+          script:
+            - ./script/incremental_build.sh analyze
+            - flutter test test/widget_test.dart
+    # Build example
+    - os: linux
+      language: android
+      licenses:
+        - 'android-sdk-preview-license-.+'
+        - 'android-sdk-license-.+'
+        - 'google-gdk-license-.+'
+      android:
+        components:
+          - tools
+          - platform-tools
+          - build-tools-25.0.3
+          - android-25
+          - sys-img-armeabi-v7a-google_apis-25
+          - extra-android-m2repository
+          - extra-google-m2repository
+          - extra-google-android-support
+      jdk: oraclejdk8
+      sudo: true
+      addons:
+        apt:
+          # Flutter depends on /usr/lib/x86_64-linux-gnu/libstdc++.so.6 version GLIBCXX_3.4.18
+          sources:
+            - ubuntu-toolchain-r-test # if we don't specify this, the libstdc++6 we get is the wrong version
+          packages:
+            - libstdc++6
+            - fonts-droid
+      before_script:
+        - wget http://services.gradle.org/distributions/gradle-3.5-bin.zip
+        - unzip -qq gradle-3.5-bin.zip
+        - export GRADLE_HOME=$PWD/gradle-3.5
+        - export PATH=$GRADLE_HOME/bin:$PATH
+        - git clone https://github.com/flutter/flutter.git -b alpha --depth 1
+      script:
+        - ./flutter/bin/flutter -v build apk
+        
+        
+        
 cache:
   directories:
     - $HOME/.pub-cache
 branches:
 only: [master]
-
-jobs:
-  include:
-  - <<: *widget_tests
-  - stage: build
-  - stage: deploy
-  
-widget_tests: &widget_tests
-  name: "Widget tests"
-  script: flutter test test/widget_test.dart
