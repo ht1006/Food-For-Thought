@@ -23,12 +23,13 @@ class Home extends StatelessWidget {
     return Scaffold(
         appBar: AppBar(
           leading: Icon(Icons.menu),
-          title: Text('Ingredients', style: new TextStyle(fontSize: 22.0)),
+          title: Text('Ingredients', style: new TextStyle(fontSize: 25.0)),
           backgroundColor: Colors.teal,
         ),
         body: new ListView.builder(
           itemBuilder: (BuildContext context, int index) {
-        return new ExpandableListView(title: '${ingredients[index]}', index: index);
+            return new ExpandableListView(index: index);
+            //return new ExpandableListView(title: '${ingredients[index]}', index: index);
         },
         itemCount: ingredients.length,
       ),
@@ -37,10 +38,10 @@ class Home extends StatelessWidget {
 }
 
 class ExpandableListView extends StatefulWidget {
-  final String title;
-  final int index = 1;
+  //final String title;
+  final int index;
 
-  const ExpandableListView({Key key, this.title, int index}) : super(key: key);
+  const ExpandableListView({Key key, this.index}) : super(key: key);
 
   @override
   _ExpandableListViewState createState() => new _ExpandableListViewState();
@@ -49,7 +50,6 @@ class ExpandableListView extends StatefulWidget {
 
 class _ExpandableListViewState extends State<ExpandableListView> {
   bool expandFlag = false;
-  int index;
 
   @override
   Widget build(BuildContext context) {
@@ -61,9 +61,9 @@ class _ExpandableListViewState extends State<ExpandableListView> {
         new Container(
           child: new Row(
           children: <Widget>[
-            new Icon(FontAwesomeIcons.appleAlt),
+            new Icon(icons[widget.index]),
             new Text(
-                  widget.title, style: TextStyle(fontSize: 20),
+                  ingredients[widget.index], style: TextStyle(fontSize: 20),
                 ),
             new IconButton(icon: new Icon(
               expandFlag ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
@@ -79,16 +79,17 @@ class _ExpandableListViewState extends State<ExpandableListView> {
         ),
         new ExpandableContainer(
             expanded: expandFlag,
+            index: getFoodTypeList(ingredients[widget.index]).length,
             child: new ListView.builder(
               itemBuilder: (BuildContext context, int index) {
                 return new Container(
                   child: new ListTile(
                     title: new Text(
-                      "Cool $index",
+                      getFoodTypeList(ingredients[widget.index])[index],
                     ),
                   ),
                 );},
-              itemCount: 15,
+              itemCount: getFoodTypeList(ingredients[widget.index]).length,
             ))
       ],
     ),
@@ -100,11 +101,12 @@ class _ExpandableListViewState extends State<ExpandableListView> {
 class ExpandableContainer extends StatelessWidget {
   final bool expanded;
   final double collapsedHeight;
+  final int index;
   final double expandedHeight;
   final Widget child;
 
   ExpandableContainer({
-    @required this.child,
+    @required this.child,this.index,
     this.collapsedHeight = 0.0,
     this.expandedHeight = 300.0,
     this.expanded = true,
@@ -117,7 +119,7 @@ class ExpandableContainer extends StatelessWidget {
       duration: new Duration(milliseconds: 200),
       curve: Curves.easeInOut,
       width: screenWidth,
-      height: expanded ? expandedHeight : collapsedHeight,
+      height: expanded ? (index * 55.0) : collapsedHeight,
       child: new Container(
         child: child,
       ),
