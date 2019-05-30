@@ -37,8 +37,8 @@ sources:
   - ubuntu-toolchain-r-test
 before_deploy:
   - ./flutter/bin/flutter -v build apk
-  - git config --local user.name "$GIT_RELEASE_USER_NAME"
-  - git config --local user.email "$GIT_RELEASE_USER_EMAIL"
+#   - git config --local user.name "$GIT_RELEASE_USER_NAME"
+#   - git config --local user.email "$GIT_RELEASE_USER_EMAIL"
 deploy:
   provider: heroku
   api_key: $HEROKU_API_KEY
