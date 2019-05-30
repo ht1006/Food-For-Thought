@@ -1,4 +1,4 @@
-language: java
+language: generic
 os:
   - linux
 sudo: true
@@ -9,19 +9,25 @@ addons:
     packages:
       - libstdc++6
       - fonts-droid
-before_script:
+install:
   - git clone https://github.com/flutter/flutter.git -b beta
-  - ./flutter/bin/flutter doctor
-script:
-  - ./flutter/bin/flutter test
-before_deploy:
-  - chmod +x ./.travis/publish.sh 
-deploy:
-  provider: script
-  skip_cleanup: true
-  script: '../.travis/publish.sh'
+$FLUTTER_CHANNEL
+  - export PATH="$PATH:`pwd`/flutter/bin/cache/dart-sdk/bin"
+  - export PATH="$PATH:`pwd`/flutter/bin"
+  - flutter doctor -v
+  - flutter packages get
 cache:
   directories:
     - $HOME/.pub-cache
 branches:
 only: [master]
+
+jobs:
+  include:
+  - <<: *widget_tests
+  - stage: build
+  - stage: deploy
+  
+widget_tests: &widget_tests
+  name: "Widget tests"
+  script: flutter test test/widget_test.dart
