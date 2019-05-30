@@ -35,7 +35,6 @@ class Home extends StatelessWidget {
       body: new ListView.builder(
         itemBuilder: (BuildContext context, int index) {
           return new ExpandableListView(index: index);
-          //return new ExpandableListView(title: '${ingredients[index]}', index: index);
         },
         itemCount: ingredients.length,
       ),
@@ -45,7 +44,6 @@ class Home extends StatelessWidget {
 
 //Ingredient dropdown
 class ExpandableListView extends StatefulWidget {
-  //final String title;
   final int index;
 
   const ExpandableListView({Key key, this.index}) : super(key: key);
@@ -105,47 +103,67 @@ class _ExpandableListViewState extends State<ExpandableListView> {
     );
   }
 
-  void _addIngredientDialog() {
-
-    Future<DateTime> selectedDate = showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2019),
-      lastDate: DateTime(2030),
-      builder: (BuildContext context, Widget child) {
-        return Theme(
-          data: ThemeData.dark(),
-          child: child,
-        );
-      },
-    );
-  }
-
   Future<String> _asyncAddIngrDialog(BuildContext context) async {
     String newIngredient = '';
+    Future<DateTime> expiryDate;
+    bool isSwitched = false;
     return showDialog<String>(
       context: context,
-      barrierDismissible: false, // dialog is dismissible with a tap on the barrier
+      barrierDismissible: true, // dialog is dismissible with a tap on the barrier
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text('Add Ingredient'),
-          content: new Row(
-            children: <Widget>[
-              new Expanded(
-                  child: new TextField(
-                    autofocus: true,
-                    decoration: new InputDecoration(hintText: 'Enter Ingredient'),
-                    onChanged: (value) {
-                      newIngredient = value;
-                    },
-                  ))
-            ],
+          content: new Container(
+            height: 150.0,
+            width: 400.0,
+            child: new Column(
+              children: <Widget>[
+                new TextField(
+                  autofocus: true,
+                  decoration: new InputDecoration(hintText: 'Enter Ingredient'),
+                  onChanged: (value) {
+                    newIngredient = value;
+                  },
+                ),
+                Padding(padding: const EdgeInsets.all(10.0)),
+                new Row(
+                  children: <Widget>[
+                    Switch(
+                      value: isSwitched,
+                      onChanged: (val) {
+                        setState(() {
+                          isSwitched = val;
+                        });
+                      },
+                      activeTrackColor: Colors.teal,
+                      activeColor: Colors.teal,
+                    ),
+                    Padding(padding: const EdgeInsets.all(10.0)),
+                    new RaisedButton(onPressed: !isSwitched ? null : () { expiryDate = showDatePicker(
+                      context: context,
+                      initialDate: DateTime.now(),
+                      firstDate: DateTime(2019),
+                      lastDate: DateTime(2030),
+                      builder: (BuildContext context, Widget child) {
+                        return Theme(
+                          data: ThemeData(primaryColor: Colors.teal, accentColor: Colors.teal),
+                          child: child,
+                        );
+                      },
+                    );}, child: Text('Add Expiry Date'))
+                  ],
+                )
+              ],
+            ),
           ),
           actions: <Widget>[
-            FlatButton(
-              child: Text('Add'),
+            RaisedButton(
+              color: Colors.teal,
+              textColor: Colors.white,
+              child: Text('ADD'),
               onPressed: () {
                 Navigator.of(context).pop(newIngredient);
+                getFoodTypeList(ingredients[widget.index]).add(newIngredient);
               },
             ),
           ],
