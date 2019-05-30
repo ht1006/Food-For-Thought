@@ -31,7 +31,7 @@ before_script:
   - "pub global activate flutter_plugin_tools"
 # Testing script
 script: 
-  - "./script/incremental_build.sh analyze"
+#  - "./script/incremental_build.sh analyze"
   - "flutter test test/widget_test.dart"
 sources: 
   - ubuntu-toolchain-r-test
