@@ -10,6 +10,10 @@ List<String> vegs = <String>['Broccoli', 'Carrots', 'Aubergines', 'Asparagus'];
 List<String> dairy = <String>['Milk', 'Almond Milk'];
 List<String> meat = <String>['Lamb', 'Chicken', 'Beef'];
 List<String> spices = <String>['Chilli Powder'];
+List<String> menuChoices = <String>['Ingredients','My Recipes','Save the Planet'
+  ,'FAQ','About'];
+List<IconData> menuIcons = <IconData>[Icons.kitchen, Icons.favorite,
+  Icons.lightbulb_outline, Icons.help, Icons.info_outline];
 final List<IconData> icons
 = <IconData>[FontAwesomeIcons.appleAlt, FontAwesomeIcons.carrot, FontAwesomeIcons.cheese
   , FontAwesomeIcons.drumstickBite, FontAwesomeIcons.pepperHot];
@@ -22,7 +26,7 @@ class Home extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: Icon(Icons.menu),
+        //leading: Icon(Icons.menu),
         title: Text('Ingredients', style: new TextStyle(fontSize: 25.0)),
         backgroundColor: Colors.teal,
         actions: <Widget>[
@@ -32,6 +36,20 @@ class Home extends StatelessWidget {
           ),
         ],
       ),
+      drawer: new Drawer(
+        child: new ListView.builder(
+              itemBuilder: (BuildContext context, int index) {
+                return new Container(
+                  child: new ListTile(
+                    leading: Icon(menuIcons[index]),
+                    title: new Text(
+                      menuChoices[index],
+                    ),
+                  ),
+                );},
+              itemCount: menuChoices.length,
+            ),
+        ),
       body: new ListView.builder(
         itemBuilder: (BuildContext context, int index) {
           return new ExpandableListView(index: index);
@@ -71,16 +89,19 @@ class _ExpandableListViewState extends State<ExpandableListView> {
                 new Text(
                   ingredients[widget.index], style: TextStyle(fontSize: 20),
                 ),
-                new IconButton(icon: new Icon(
-                  expandFlag ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                  size: 30.0,
-                ),
-                    onPressed: () {
-                      setState(() {
-                        expandFlag = !expandFlag;
-                      });
-                    }),
-                new IconButton(icon: new Icon(Icons.add), onPressed: () => _asyncAddIngrDialog(context))
+                new Row(
+                  children: <Widget>[
+                      new IconButton(icon: new Icon(
+                      expandFlag ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                      size: 30.0,
+                    ),
+                        onPressed: () {
+                          setState(() {
+                            expandFlag = !expandFlag;
+                          });
+                        }),
+                    new IconButton(icon: new Icon(Icons.add), onPressed: () => _asyncAddIngrDialog(context))],
+                  ),
               ],
             ),
           ),
