@@ -1,63 +1,47 @@
-matrix:
-  include:
-  #Run analyzer and test for the app
-    - language: generic
-      os:
-        - linux
-      sudo: true
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test 
-          packages:
-            - libstdc++6
-            - fonts-droid
-          before_script:
-            - git clone https://github.com/flutter/flutter.git
-            - export PATH=`pwd`/flutter/bin:`pwd`/flutter/bin/cache/dart-sdk/bin:$PATH
-            - flutter doctor
-            - pub global activate flutter_plugin_tools
-          script:
-            - ./script/incremental_build.sh analyze
-            - flutter test test/widget_test.dart
-    # Build example
-    - os: linux
-      language: android
-      licenses:
-        - 'android-sdk-preview-license-.+'
-        - 'android-sdk-license-.+'
-        - 'google-gdk-license-.+'
-      android:
-        components:
-          - tools
-          - platform-tools
-          - build-tools-25.0.3
-          - android-25
-          - sys-img-armeabi-v7a-google_apis-25
-          - extra-android-m2repository
-          - extra-google-m2repository
-          - extra-google-android-support
-      jdk: oraclejdk8
-      sudo: true
-      addons:
-        apt:
-          # Flutter depends on /usr/lib/x86_64-linux-gnu/libstdc++.so.6 version GLIBCXX_3.4.18
-          sources:
-            - ubuntu-toolchain-r-test # if we don't specify this, the libstdc++6 we get is the wrong version
-          packages:
-            - libstdc++6
-            - fonts-droid
-      before_script:
-        - wget http://services.gradle.org/distributions/gradle-3.5-bin.zip
-        - unzip -qq gradle-3.5-bin.zip
-        - export GRADLE_HOME=$PWD/gradle-3.5
-        - export PATH=$GRADLE_HOME/bin:$PATH
-        - git clone https://github.com/flutter/flutter.git
-      script:
-        - ./flutter/bin/flutter -v build apk
-    # Deployment stage      
+os: linux
+language: android
+licenses:
+  - android-sdk-preview-license-.+
+  - android-sdk-license-.+
+  - google-gdk-license-.+
+android:
+  components:
+    - tools
+    - platform-tools
+    - build-tools-28.0.3
+    - android-28
+    - sys-img-armeabi-v7a-google_apis-25
+    - extra-android-m2repository
+    - extra-google-m2repository
+    - extra-google-android-support
+jdk: oraclejdk8
+sudo: false
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - libstdc++6
+      - fonts-droid
+before_script:
+  - git clone https://github.com/flutter/flutter.git
+  - export PATH=`pwd`/flutter/bin:`pwd`/flutter/bin/cache/dart-sdk/bin:$PATH
+  - flutter doctor
+  - pub global activate flutter_plugin_tools
+script:
+  - flutter test test/widget_test.dart
+sources:
+  - ubuntu-toolchain-r-test
+before_deploy:
+  - "./flutter/bin/flutter -v build apk"
+deploy:
+  provider: releases
+  api_key:
+    secure: UU7ke/UELS/iyAAAWXSS6tPvEhjGVrOrmjbiQbgEvvyJ0VvGWlajIKnzp4HUESW5ZZFRdVdK705J/ucEQPzz2Kfeehm2uzCRXuWtbg3ECfvIx+jId31I3msV859S7URfxHDO1PGJtk9beUqrtSQdnkyvVMzIEFF21Zb9Wk8izXjses1R1/cCaPVa0yS/AZCXTYChQJxYhPX6UHd7Minz/QZ2kmE5GRX6UqO6DBr45RTVL/cyhGK62B6b27lF3zFnuBwePOX6oi+H3bC6GIOJoUnBSVYcdnCci/JhSvY0LXQgLb2Y3w2fFppe6XrT1n5Xy1SPhSyItzUtEpTpwYFJwWiyOv3qVFrQVPqP2TnHqF0W1+1Vjey5JxVOxpPOsU+zMNl+kM64s0rvVdzsU8LtV9TVQNDFki/mzg3vS6JYJulZMH3pZpMKTGKYTVcTrhFYvjAKyr3GRiciePiBWM2BbiT83Xt2A4HF8T/HQRzDeeba8iZ/7aKd2sUgCN0YF1M+fYbX7JZFZ+QleGUPdQGLWEgI0UuPkij4bBM3NXNhKnJIMTW7QX2jCRxK3gGZurzAGjAuaQn7yZhikVrRKs04ujdsFVRQ98bd1m5ul/ewhT0eCnAmCKN2unGDomwB3/tkug1U3G/bCjAQ/gV4fKG5E7AfrK3kC6WWSwPIfEuKCEM=
+  file: build/app/outputs/apk/app.apk
+  skip_cleanup: true
+  on:
+    repo: xym0112/FoodForThought
 cache:
   directories:
-    - $HOME/.pub-cache
-branches:
-only: [master]
+    - "$HOME/.pub-cache"
