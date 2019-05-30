@@ -159,65 +159,65 @@ List<String> getFoodTypeList(String foodType) {
 
 
 
-
-//Previous codes
-  Widget _buildIngredients() {
-    return ListView.separated(
-        padding: const EdgeInsets.all(16.0),
-        itemCount: ingredients.length,
-        itemBuilder: (BuildContext context, int index) {
-          return ListTile(
-            leading: Icon(icons[index]),
-            title: Text('${ingredients[index]}',
-                style: new TextStyle(fontSize: 20.0)),
-            trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  Icon(Icons.add),
-                  Padding(padding: const EdgeInsets.all(10.0)),
-                  IconButton(icon: Icon(Icons.arrow_drop_down),
-                      onPressed: () => new ExpandableIngredients(foodType: '${ingredients[index]}'))
-                  ]),
-          );
-        },
-      separatorBuilder: (BuildContext context, int index) => const Divider(),
-    );
-  }
-
-
-class HeaderIngredients extends StatelessWidget {
-  final foodType;
-
-  const HeaderIngredients({Key key, this.foodType}) : super(key:key);
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-
-      body: ExpandableIngredients(foodType: foodType),
-    );
-  }
-
-}
-
-class ExpandableIngredients extends StatelessWidget {
-  final String foodType;
-
-  const ExpandableIngredients({Key key, this.foodType}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    List<String> lists = getFoodTypeList(foodType);
-    final list = List.generate(lists.length, (i) => lists[i]);
-    return new ListView.builder(
-      itemCount: 1,
-      itemBuilder: (context, i) => ExpansionTile(
-        title: new Text(foodType),
-        children: list
-            .map((val) => new ListTile(
-          title: new Text(val),
-        ))
-            .toList(),
-      ),
-    );
-  }
-}
+//
+////Previous codes
+//  Widget _buildIngredients() {
+//    return ListView.separated(
+//        padding: const EdgeInsets.all(16.0),
+//        itemCount: ingredients.length,
+//        itemBuilder: (BuildContext context, int index) {
+//          return ListTile(
+//            leading: Icon(icons[index]),
+//            title: Text('${ingredients[index]}',
+//                style: new TextStyle(fontSize: 20.0)),
+//            trailing: Row(
+//                mainAxisSize: MainAxisSize.min,
+//                children: <Widget>[
+//                  Icon(Icons.add),
+//                  Padding(padding: const EdgeInsets.all(10.0)),
+//                  IconButton(icon: Icon(Icons.arrow_drop_down),
+//                      onPressed: () => new ExpandableIngredients(foodType: '${ingredients[index]}'))
+//                  ]),
+//          );
+//        },
+//      separatorBuilder: (BuildContext context, int index) => const Divider(),
+//    );
+//  }
+//
+//
+//class HeaderIngredients extends StatelessWidget {
+//  final foodType;
+//
+//  const HeaderIngredients({Key key, this.foodType}) : super(key:key);
+//  @override
+//  Widget build(BuildContext context) {
+//    return Scaffold(
+//
+//      body: ExpandableIngredients(foodType: foodType),
+//    );
+//  }
+//
+//}
+//
+//class ExpandableIngredients extends StatelessWidget {
+//  final String foodType;
+//
+//  const ExpandableIngredients({Key key, this.foodType}) : super(key: key);
+//
+//  @override
+//  Widget build(BuildContext context) {
+//    List<String> lists = getFoodTypeList(foodType);
+//    final list = List.generate(lists.length, (i) => lists[i]);
+//    return new ListView.builder(
+//      itemCount: 1,
+//      itemBuilder: (context, i) => ExpansionTile(
+//        title: new Text(foodType),
+//        children: list
+//            .map((val) => new ListTile(
+//          title: new Text(val),
+//        ))
+//            .toList(),
+//      ),
+//    );
+//  }
+//}
