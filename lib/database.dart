@@ -8,7 +8,7 @@ class OwnedIngredient {
   OwnedIngredient(this.name, this.category);
 
   Map<String, dynamic> toMap() {
-    return {'name': name, 'category': category,};
+    return {'ingredient': name, 'category': category,};
   }
 }
 
@@ -19,21 +19,21 @@ Future addOwnedIngredient(Database db, String category, String ingredient) async
 
 // Removes an ingredient to the 'owned' table
 Future removeOwnedIngredient(Database db, String ingredient) async {
-  await db.delete('owned', where: '"name" = ?', whereArgs: [ingredient]);
+  await db.delete('owned', where: '"ingredient" = ?', whereArgs: [ingredient]);
 }
 
 // Retrieves list of owned ingredients from the given category
 Future<List> getOwnedIngredientList(Database db, String category) async {
   List<Map> result = await db.query('owned', where: '"category" = ?',
       whereArgs: [category]);
-  return mapToList(result, 'name');
+  return mapToList(result, 'ingredient');
 }
 
 // Given list of ingredients, returns list of corresponding IDs
 Future<List<int>> getIngrIDs(Database db, List<String> ingredients) async {
   List<int> ids = new List(ingredients.length);
   List<Map> result = await db.query('ingredients', columns: ['id'],
-      where: '"name" = ?', whereArgs: [ingredients]);
+      where: '"ingredient" = ?', whereArgs: [ingredients]);
   result.forEach((ingr) async {
     ids.add(ingr['id']);
   });
@@ -61,7 +61,7 @@ List mapToList(List<Map> records, String key) {
 // Get ID of a dish
 Future<int> getDishID(Database db, String dish) async {
   return (await db.query('dishes', columns: ['id'],
-              where: '"name" = ?', whereArgs: [dish]))[0]['id'];
+              where: '"ingredient" = ?', whereArgs: [dish]))[0]['id'];
 }
 
 // Gets ingredients of a recipe and their quantity/units
