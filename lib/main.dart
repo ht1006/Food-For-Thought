@@ -101,7 +101,7 @@ class _ExpandableListViewState extends State<ExpandableListView> {
                 new Icon(icons[widget.index]),
                 Padding(padding: const EdgeInsets.all(10.0)),
                 new Text(
-                  ingredients[widget.index], style: TextStyle(fontSize: 20),
+                  ingredients[widget.index], style: TextStyle(fontSize: 19),
                 ),
                 new Row(
                   children: <Widget>[
