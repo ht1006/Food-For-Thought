@@ -1,15 +1,17 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:path/path.dart';
+import 'package:sqflite/sqflite.dart';
+import 'database.dart';
+
 
 //example database
+Database db;
 final List<String> ingredients
 = <String>['Fruit', 'Vegetables', 'Dairy', 'Meat', 'Spices'];
-List<String> fruits = <String>['Apple', 'Orange', 'Banana'];
-List<String> vegs = <String>['Broccoli', 'Carrots', 'Aubergines', 'Asparagus'];
-List<String> dairy = <String>['Milk', 'Almond Milk'];
-List<String> meat = <String>['Lamb', 'Chicken', 'Beef'];
-List<String> spices = <String>['Chilli Powder'];
 List<String> menuChoices = <String>['Ingredients','My Recipes','Save the Planet'
   ,'FAQ','About'];
 List<IconData> menuIcons = <IconData>[Icons.kitchen, Icons.favorite,
@@ -21,9 +23,20 @@ final List<IconData> icons
 //main page
 void main() => runApp(new MaterialApp(home: new Home()));
 
+// Open existing database
+Future openAppDatabase() async {
+  var databasesPath = await getDatabasesPath();
+  var path = join(databasesPath, 'app.db');
+  ByteData data = await rootBundle.load("./assets/database.db");
+  List<int> bytes = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
+  await File(path).writeAsBytes(bytes);
+  db = await openDatabase(path);
+}
+
 class Home extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    openAppDatabase();
     return Scaffold(
       appBar: AppBar(
         //leading: Icon(Icons.menu),
@@ -73,6 +86,7 @@ class ExpandableListView extends StatefulWidget {
 
 class _ExpandableListViewState extends State<ExpandableListView> {
   bool expandFlag = false;
+  List ingredientsList = [];
 
   @override
   Widget build(BuildContext context) {
@@ -106,22 +120,27 @@ class _ExpandableListViewState extends State<ExpandableListView> {
             ),
           ),
           new ExpandableContainer(
-              expanded: expandFlag,
-              index: getFoodTypeList(ingredients[widget.index]).length,
-              child: new ListView.builder(
-                itemBuilder: (BuildContext context, int index) {
-                  return new Container(
-                    child: new ListTile(
-                      title: new Text(
-                        getFoodTypeList(ingredients[widget.index])[index],
-                      ),
+            expanded: expandFlag,
+            index: ingredientsList.length,
+            child: new ListView.builder(
+              itemBuilder: (BuildContext context, int index) {
+                return new Container(
+                  child: new ListTile(
+                    title: new Text(
+                      ingredientsList[index],
                     ),
-                  );},
-                itemCount: getFoodTypeList(ingredients[widget.index]).length,
-              ))
+                  ),
+                );},
+              itemCount: ingredientsList.length,
+            )
+          )
         ],
       ),
     );
+  }
+
+  Future updateIngredientsList(String foodType) async {
+    ingredientsList = await getFoodTypeList(foodType);
   }
 
   Future<String> _asyncAddIngrDialog(BuildContext context) async {
@@ -184,7 +203,12 @@ class _ExpandableListViewState extends State<ExpandableListView> {
               child: Text('ADD'),
               onPressed: () {
                 Navigator.of(context).pop(newIngredient);
-                getFoodTypeList(ingredients[widget.index]).add(newIngredient);
+                if (newIngredient.isNotEmpty) {
+                  addOwnedIngredient(db, ingredients[widget.index],
+                      newIngredient);
+                  updateIngredientsList(ingredients[widget.index]);
+                }
+
               },
             ),
           ],
@@ -225,24 +249,7 @@ class ExpandableContainer extends StatelessWidget {
 }
 
 //Return the corresponding specific ingredient list according to the foodType
-List<String> getFoodTypeList(String foodType) {
-  List<String> lists;
-  switch(foodType) {
-    case "Fruit":
-      lists = fruits;
-      break;
-    case "Vegetables":
-      lists = vegs;
-      break;
-    case "Dairy":
-      lists = dairy;
-      break;
-    case "Meat":
-      lists = meat;
-      break;
-    case "Spices":
-      lists = spices;
-      break;
-  }
-  return lists;
+Future<List> getFoodTypeList(String foodType) {
+  return getOwnedIngredientList(db, foodType);
 }
+
