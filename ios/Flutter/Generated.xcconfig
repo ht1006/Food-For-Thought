@@ -1,10 +1,10 @@
 // This is a generated file; do not edit or check into version control.
-FLUTTER_ROOT=/Users/huiluntao/DevApps/flutter
-FLUTTER_APPLICATION_PATH=/Users/huiluntao/FoodForThought
-FLUTTER_TARGET=/Users/huiluntao/FoodForThought/lib/main.dart
+FLUTTER_ROOT=/Users/Amina/Mobile App Dev/flutter
+FLUTTER_APPLICATION_PATH=/Users/Amina/FoodForThought
+FLUTTER_TARGET=/Users/Amina/FoodForThought/lib/main.dart
 FLUTTER_BUILD_DIR=build
 SYMROOT=${SOURCE_ROOT}/../build/ios
-FLUTTER_FRAMEWORK_DIR=/Users/huiluntao/DevApps/flutter/bin/cache/artifacts/engine/ios
+FLUTTER_FRAMEWORK_DIR=/Users/Amina/Mobile App Dev/flutter/bin/cache/artifacts/engine/ios
 FLUTTER_BUILD_NAME=1.0.0
 FLUTTER_BUILD_NUMBER=1
 TRACK_WIDGET_CREATION=true

@@ -45,7 +45,12 @@ class Home extends StatelessWidget {
         actions: <Widget>[
           IconButton(
             icon: Icon(Icons.local_dining),
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => RecipeGen()),
+              );
+            },
           ),
         ],
       ),
@@ -251,5 +256,146 @@ class ExpandableContainer extends StatelessWidget {
 //Return the corresponding specific ingredient list according to the foodType
 Future<List> getFoodTypeList(String foodType) {
   return getOwnedIngredientList(db, foodType);
+}
+
+//Recipe generator page
+class RecipeGen extends StatelessWidget {
+  List<Recipe> example
+    = <Recipe>[new Recipe(name: 'Shakshouka',
+                          ingredientsUsed: null,
+                          directions: 'do this do that'),
+               new Recipe(name: 'Fattoush',
+                          ingredientsUsed: null,
+                          directions: 'hi there, some instructions here'),
+               new Recipe(name: 'Fried Chicken',
+                          ingredientsUsed: null,
+                          directions: 'fry the chicken')];
+  List<String> exampleImages
+    = <String>[
+      "https://bit.ly/2W5WzsF", "https://bit.ly/312xmCW", "https://bit.ly/2W9jXW6"
+    ];
+
+  @override
+  Widget build(BuildContext context) {
+    List<Recipe> recipesGenerated = _fetch_recipes();
+    int numRecipes = recipesGenerated == null ? 0 : recipesGenerated.length;
+    return Scaffold(
+        appBar: AppBar(
+            title: Text(
+                "Recipe Suggestions", style: new TextStyle(fontSize: 25.0)),
+            backgroundColor: Colors.teal
+        ),
+        body: Container(
+          child: ListView.builder(
+            scrollDirection: Axis.vertical,
+            shrinkWrap: true,
+            //itemCount: numRecipes instead of example
+            itemCount: example.length,
+            itemBuilder: (BuildContext context, int index) {
+              return _makeRecipeCard(index);
+            },
+          ),
+        )
+    );
+  }
+
+  Widget _makeRecipeCard(int index) {
+    return Card(
+      elevation: 8.0,
+      semanticContainer: true,
+      clipBehavior: Clip.antiAliasWithSaveLayer,
+      margin: new EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
+      child: Container(
+        decoration: BoxDecoration(
+            image: DecorationImage(
+              //use image field from Recipe class instead
+              image: new NetworkImage(exampleImages[index]),
+              fit: BoxFit.cover,
+              alignment: Alignment.topCenter,
+            ),
+        ),
+        child: _makeRecipeListTile(index)
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10.0),
+      ),
+    );  
+  }
+
+  Widget _makeRecipeListTile(int index) {
+    return ListTile(
+        contentPadding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 40.0),
+        title: Text(
+          //below, it would be recipesGenerated[index].name instead of example
+          example[index].name,
+          style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 27.0,
+              shadows: [
+                Shadow( // bottomLeft
+                    offset: Offset(-1.5, -1.5),
+                    color: Colors.black
+                ),
+                Shadow( // bottomRight
+                    offset: Offset(1.5, -1.5),
+                    color: Colors.black
+                ),
+                Shadow( // topRight
+                    offset: Offset(1.5, 1.5),
+                    color: Colors.black
+                ),
+                Shadow( // topLeft
+                    offset: Offset(-1.5, 1.5),
+                    color: Colors.black
+                ),
+              ]),
+        ),
+        trailing:
+        Icon(Icons.keyboard_arrow_right, color: Colors.white, size: 30.0));
+  }
+}
+
+//Recipe class - stores info regarding each recipe
+class Recipe extends StatelessWidget {
+  final String name;
+  // insert picture declaration here
+  final List<IngredientUsed> ingredientsUsed;
+  final String directions;
+
+  const Recipe({Key key, this.name, this.directions, this.ingredientsUsed}) : super(key: key);
+
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+          title: Text(name, style: new TextStyle(fontSize: 25.0)),
+          backgroundColor: Colors.teal
+      ),
+      body: Container(
+
+      )
+    );
+  }
+
+}
+
+class IngredientUsed extends StatelessWidget {
+  final String ingredientName;
+  final int quantity;
+  final String unit;
+
+  const IngredientUsed({Key key, this.ingredientName, this.quantity, this.unit}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text('$quantity' + ' ' + unit + ' ' + ingredientName);
+  }
+
+}
+
+List<Recipe> _fetch_recipes() {
+  return null;
 }
 
