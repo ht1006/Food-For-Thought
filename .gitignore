@@ -3,3 +3,5 @@
 .packages
 pubspec.lock
 build/
+.flutter-plugins
+local.properties

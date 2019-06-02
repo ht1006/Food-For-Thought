@@ -21,7 +21,7 @@ final List<IconData> icons
   , FontAwesomeIcons.drumstickBite, FontAwesomeIcons.pepperHot];
 
 //main page
-void main() => runApp(new MaterialApp(home: new Home()));
+void main() => runApp(MyApp());
 
 // Open existing database
 Future openAppDatabase() async {
@@ -33,7 +33,64 @@ Future openAppDatabase() async {
   db = await openDatabase(path);
 }
 
-class Home extends StatelessWidget {
+class MyApp extends StatelessWidget {
+  //static const String _title = 'Flutter Code Sample';
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: Home(),
+    );
+  }
+}
+
+class Home extends StatefulWidget {
+  Home({Key key}) : super(key: key);
+
+  @override
+  _HomeState createState() => new _HomeState();
+}
+
+class _HomeState extends State<Home> {
+  int _selectedIndex = 0;
+
+  //Store different pages. Index 0 is Ingredients page, 1 is My Recipes, 3 is FAQ
+  final List<Widget> _children = [
+    new Container(child: new Column(children: <Widget>[
+      new Container(child: new Column(
+        children: <Widget>[
+          Padding(padding: const EdgeInsets.fromLTRB(8,15.0,8,0),
+            child: TextField(
+              onChanged: (searchIngredient) {
+                //TODO： deal with the input ingredient
+              },
+              decoration: InputDecoration(
+                  labelText: "Search For Ingredients",
+                  prefixIcon: Icon(Icons.search),
+                  enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.teal),
+                      borderRadius: BorderRadius.all(Radius.circular(25.0))),
+              ),))
+        ],
+      )),
+      new Expanded(child: new ListView.builder(
+        itemBuilder: (BuildContext context, int index) {
+          return new ExpandableListView(index: index);
+        },
+        itemCount: ingredients.length,
+      ),)
+    ],),),
+    Center(child: Text(
+      'Wassup I\'m recipe page',
+      style: TextStyle(fontSize: 30),
+    )),
+    Center(child: Text(
+      'Wassup I\'m FAQ page',
+      style: TextStyle(fontSize: 30),
+    )),
+
+  ];
+
   @override
   Widget build(BuildContext context) {
     openAppDatabase();
@@ -54,27 +111,48 @@ class Home extends StatelessWidget {
           ),
         ],
       ),
+      body:_children[_selectedIndex],
+      bottomNavigationBar: BottomNavigationBar(
+        items: [
+          BottomNavigationBarItem(
+            icon: new Icon(Icons.kitchen),
+            title: new Text('Ingredients'),
+          ),
+          BottomNavigationBarItem(
+            icon: new Icon(Icons.favorite),
+            title: new Text('My Recipes'),
+          ),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.help),
+              title: Text('FAQ')
+          )
+        ],
+        currentIndex: _selectedIndex,
+        selectedItemColor: Colors.teal,
+        onTap: _onItemTapped,
+      ),
       drawer: new Drawer(
         child: new ListView.builder(
               itemBuilder: (BuildContext context, int index) {
                 return new Container(
+                  padding: const EdgeInsets.fromLTRB(0,10.0,0,10.0),
                   child: new ListTile(
                     leading: Icon(menuIcons[index]),
                     title: new Text(
-                      menuChoices[index],
+                      menuChoices[index],style: TextStyle(fontSize: 18)
                     ),
                   ),
                 );},
               itemCount: menuChoices.length,
             ),
         ),
-      body: new ListView.builder(
-        itemBuilder: (BuildContext context, int index) {
-          return new ExpandableListView(index: index);
-        },
-        itemCount: ingredients.length,
-      ),
     );
+  }
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
   }
 }
 
@@ -152,6 +230,7 @@ class _ExpandableListViewState extends State<ExpandableListView> {
     String newIngredient = '';
     Future<DateTime> expiryDate;
     bool isSwitched = false;
+
     return showDialog<String>(
       context: context,
       barrierDismissible: true, // dialog is dismissible with a tap on the barrier
@@ -161,46 +240,10 @@ class _ExpandableListViewState extends State<ExpandableListView> {
           content: new Container(
             height: 150.0,
             width: 400.0,
-            child: new Column(
-              children: <Widget>[
-                new TextField(
-                  autofocus: true,
-                  decoration: new InputDecoration(hintText: 'Enter Ingredient'),
-                  onChanged: (value) {
-                    newIngredient = value;
-                  },
-                ),
-                Padding(padding: const EdgeInsets.all(10.0)),
-                new Row(
-                  children: <Widget>[
-                    Switch(
-                      value: isSwitched,
-                      onChanged: (val) {
-                        setState(() {
-                          isSwitched = val;
-                        });
-                      },
-                      activeTrackColor: Colors.teal,
-                      activeColor: Colors.teal,
-                    ),
-                    Padding(padding: const EdgeInsets.all(10.0)),
-                    new RaisedButton(onPressed: !isSwitched ? null : () { expiryDate = showDatePicker(
-                      context: context,
-                      initialDate: DateTime.now(),
-                      firstDate: DateTime(2019),
-                      lastDate: DateTime(2030),
-                      builder: (BuildContext context, Widget child) {
-                        return Theme(
-                          data: ThemeData(primaryColor: Colors.teal, accentColor: Colors.teal),
-                          child: child,
-                        );
-                      },
-                    );}, child: Text('Add Expiry Date'))
-                  ],
-                )
-              ],
-            ),
+            child: new AddIngredient(newIngredient: newIngredient,
+                expiryDate: expiryDate,isSwitched: isSwitched)
           ),
+
           actions: <Widget>[
             RaisedButton(
               color: Colors.teal,
@@ -219,6 +262,69 @@ class _ExpandableListViewState extends State<ExpandableListView> {
           ],
         );
       },
+    );
+  }
+
+}
+
+class AddIngredient extends StatefulWidget {
+  String newIngredient;
+  Future<DateTime> expiryDate;
+  bool isSwitched;
+  AddIngredient({Key key, this.newIngredient, this.isSwitched, this.expiryDate}) : super(key: key);
+
+  @override
+  _AddIngredientState createState() => new _AddIngredientState();
+}
+
+class _AddIngredientState extends State<AddIngredient> {
+
+  @override
+  void initState(){
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+
+    return new Column(
+      children: <Widget>[
+        new TextField(
+          autofocus: true,
+          decoration: new InputDecoration(hintText: 'Enter Ingredient'),
+          onChanged: (value) {
+            widget.newIngredient = value;
+          },
+        ),
+        Padding(padding: const EdgeInsets.all(10.0)),
+        new Row(
+          children: <Widget>[
+            Switch(
+              value: widget.isSwitched,
+              onChanged: (val) {
+                setState(() {
+                  widget.isSwitched = val;
+                });
+              },
+              activeTrackColor: Colors.teal,
+              activeColor: Colors.teal,
+            ),
+            Padding(padding: const EdgeInsets.all(10.0)),
+            new RaisedButton(onPressed: !widget.isSwitched ? null : () { widget.expiryDate = showDatePicker(
+              context: context,
+              initialDate: DateTime.now(),
+              firstDate: DateTime(2019),
+              lastDate: DateTime(2030),
+              builder: (BuildContext context, Widget child) {
+                return Theme(
+                  data: ThemeData(primaryColor: Colors.teal, accentColor: Colors.teal),
+                  child: child,
+                );
+              },
+            );}, child: Text('Add Expiry Date'))
+          ],
+        )
+      ],
     );
   }
 
