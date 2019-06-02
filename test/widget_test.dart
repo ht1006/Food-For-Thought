@@ -16,7 +16,7 @@ void main() {
     await tester.pumpWidget(MyApp());
 
     // Verify that our counter starts at 0.
-    expect(find.text('Ingredients'), findsOneWidget);
+    expect(find.text('Ingredients'), findsNWidgets(2));
     expect(find.text('Fruit'), findsOneWidget);
     expect(find.text('Vegetables'), findsOneWidget);
     expect(find.text('Dairy'), findsOneWidget);
