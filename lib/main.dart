@@ -7,7 +7,6 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'database.dart';
 
-
 //example database
 Database db;
 final List<String> ingredients
@@ -24,14 +23,32 @@ final List<IconData> icons
 void main() => runApp(MyApp());
 
 // Open existing database
+//Future openAppDatabase() async {
+//  var databasesPath = await getDatabasesPath();
+//  var path = join(databasesPath, 'app.db');
+//  ByteData data = await rootBundle.load("./assets/database.db");
+//  List<int> bytes = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
+//  await File(path).writeAsBytes(bytes);
+//  db = await openDatabase(path);
+//}
+
 Future openAppDatabase() async {
   var databasesPath = await getDatabasesPath();
   var path = join(databasesPath, 'app.db');
-  ByteData data = await rootBundle.load("./assets/database.db");
-  List<int> bytes = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
-  await File(path).writeAsBytes(bytes);
+
+  if (!(await databaseExists(path))) {
+    try {
+      await Directory(dirname(path)).create(recursive: true);
+    } catch (_) {}
+
+    ByteData data = await rootBundle.load(join("assets", "database.db"));
+    List<int> bytes = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
+    await File(path).writeAsBytes(bytes, flush: true);
+  }
+
   db = await openDatabase(path);
 }
+
 
 class MyApp extends StatelessWidget {
   //static const String _title = 'Flutter Code Sample';
@@ -231,6 +248,12 @@ class _ExpandableListViewState extends State<ExpandableListView> {
     Future<DateTime> expiryDate;
     bool isSwitched = false;
 
+    callback(value) {
+      setState(() {
+        newIngredient = value;
+      });
+    }
+
     return showDialog<String>(
       context: context,
       barrierDismissible: true, // dialog is dismissible with a tap on the barrier
@@ -240,8 +263,8 @@ class _ExpandableListViewState extends State<ExpandableListView> {
           content: new Container(
             height: 150.0,
             width: 400.0,
-            child: new AddIngredient(newIngredient: newIngredient,
-                expiryDate: expiryDate,isSwitched: isSwitched)
+            child: AddIngredient(newIngredient, isSwitched,
+                expiryDate, callback)
           ),
 
           actions: <Widget>[
@@ -252,6 +275,7 @@ class _ExpandableListViewState extends State<ExpandableListView> {
               onPressed: () {
                 Navigator.of(context).pop(newIngredient);
                 if (newIngredient.isNotEmpty) {
+                  print("hey");
                   addOwnedIngredient(db, ingredients[widget.index],
                       newIngredient);
                   updateIngredientsList(ingredients[widget.index]);
@@ -268,10 +292,13 @@ class _ExpandableListViewState extends State<ExpandableListView> {
 }
 
 class AddIngredient extends StatefulWidget {
+
   String newIngredient;
   Future<DateTime> expiryDate;
   bool isSwitched;
-  AddIngredient({Key key, this.newIngredient, this.isSwitched, this.expiryDate}) : super(key: key);
+  Function(String) callback;
+
+  AddIngredient(this.newIngredient, this.isSwitched, this.expiryDate, this.callback);
 
   @override
   _AddIngredientState createState() => new _AddIngredientState();
@@ -293,7 +320,7 @@ class _AddIngredientState extends State<AddIngredient> {
           autofocus: true,
           decoration: new InputDecoration(hintText: 'Enter Ingredient'),
           onChanged: (value) {
-            widget.newIngredient = value;
+            widget.callback(value);
           },
         ),
         Padding(padding: const EdgeInsets.all(10.0)),
