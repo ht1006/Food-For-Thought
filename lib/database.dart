@@ -1,5 +1,5 @@
-import 'dart:_http';
 import 'dart:core';
+import 'dart:io';
 import 'package:sqflite/sqflite.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -20,7 +20,7 @@ Future removeOwnedIngredient(Database db, String ingredient) async {
 // Retrieves list of owned ingredients from the given category
 Future<List> getOwnedIngredientList(Database db, String category) async {
   List<Map> result = await db.query('owned', where: '"category" = ?',
-      whereArgs: [category]);
+      whereArgs: [category], distinct: true);
   return mapToList(result, 'ingredient');
 }
 
@@ -39,7 +39,7 @@ Future<List<String>> getAllIngredientsList() async {
   throw Exception('Failed to load post');
 }
 
-//TODO: Finish
+// Gets recipes based on owned ingredients and decodes from json format
 Future<List<Recipe>> fetchRecipes(List<String> ownedIngredients) async {
   String jsonOwned = json.encode(ownedIngredients);
   var param = {
@@ -48,9 +48,13 @@ Future<List<Recipe>> fetchRecipes(List<String> ownedIngredients) async {
   };
   Uri uri = Uri.parse('https://fft-group3.herokuapp.com/').replace(queryParameters: param);
   http.Response resp = await http.get(uri, headers: {HttpHeaders.contentTypeHeader: "application/json"} );
-
   if (resp.statusCode == 200) {
-
+    List<Recipe> recipes = [];
+    List<Map> jsonList = json.decode(resp.body);
+    jsonList.forEach((obj) {
+      recipes.add(Recipe.decodeJson(obj));
+    });
+    return recipes;
   }
   throw Exception('Failed to load post');
 }

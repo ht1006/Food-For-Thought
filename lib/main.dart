@@ -244,8 +244,9 @@ class _SearchBarState extends State<SearchBar> {
 //Ingredient dropdown
 class ExpandableListView extends StatefulWidget {
   final int index;
+  List ingredientsList = [];
 
-  const ExpandableListView({Key key, this.index}) : super(key: key);
+  ExpandableListView({Key key, this.index}) : super(key: key);
 
   @override
   _ExpandableListViewState createState() => new _ExpandableListViewState();
@@ -254,7 +255,6 @@ class ExpandableListView extends StatefulWidget {
 
 class _ExpandableListViewState extends State<ExpandableListView> {
   bool expandFlag = false;
-  List ingredientsList = [];
 
   @override
   Widget build(BuildContext context) {
@@ -289,16 +289,23 @@ class _ExpandableListViewState extends State<ExpandableListView> {
           ),
           new ExpandableContainer(
             expanded: expandFlag,
-            index: ingredientsList.length,
+            index: widget.ingredientsList.length,
             child: new ListView.builder(
             itemBuilder: (BuildContext context, int index) {
-              return new Container(child: new Row(children: <Widget>[
-                new Expanded(child: new ListTile(
-                title: new Text(ingredientsList[index]),)),
-                new IconButton(icon: new Icon(Icons.delete), onPressed: () =>
-                    deleteIngredient(context, index))],))
-              ;},
-              itemCount: ingredientsList.length,
+              return new Container(
+                  child: new Row(
+                    children: <Widget>[
+                      new Expanded(child: new ListTile(
+                      title: new Text(widget.ingredientsList[index]),)),
+                      new IconButton(icon: new Icon(Icons.delete), onPressed: () {
+                        removeOwnedIngredient(db, widget.ingredientsList[index]);
+                        updateIngredientsList(ingredients[widget.index]);
+                      })
+                    ],
+                  )
+              );
+            },
+              itemCount: widget.ingredientsList.length,
             )
 
 
@@ -322,7 +329,10 @@ class _ExpandableListViewState extends State<ExpandableListView> {
   }
 
   Future updateIngredientsList(String foodType) async {
-    ingredientsList = await getFoodTypeList(foodType);
+    List newIngredients = await getFoodTypeList(foodType);
+    setState(() {
+      widget.ingredientsList = newIngredients;
+    });
   }
 
   Future<String> _asyncAddIngrDialog(BuildContext context) async {
@@ -356,7 +366,8 @@ class _ExpandableListViewState extends State<ExpandableListView> {
               child: Text('ADD'),
               onPressed: () {
                 Navigator.of(context).pop(newIngredient);
-                if (newIngredient.isNotEmpty) {
+                if (newIngredient.isNotEmpty
+                    && !widget.ingredientsList.contains(newIngredient)) {
                   addOwnedIngredient(db, ingredients[widget.index],
                       newIngredient);
                   updateIngredientsList(ingredients[widget.index]);
@@ -369,12 +380,6 @@ class _ExpandableListViewState extends State<ExpandableListView> {
       },
     );
   }
-
-  //TODO: delete the ingredient
-  deleteIngredient(BuildContext context, int index) {
-    print("Hey yo wassup I wanna delete " + ingredientsList[index]);
-  }
-
 }
 
 class AddIngredient extends StatefulWidget {
