@@ -11,7 +11,7 @@ import 'package:autocomplete_textfield/autocomplete_textfield.dart';
 
 //example database
 Database db;
-final List<String> ingredients
+final List<String> categories
 = <String>['Fruit', 'Vegetables', 'Dairy', 'Meat', 'Spices'];
 List<String> menuChoices = <String>['Ingredients','My Recipes','Save the Planet'
   ,'FAQ','About'];
@@ -69,7 +69,7 @@ class _HomeState extends State<Home> {
         itemBuilder: (BuildContext context, int index) {
           return new ExpandableListView(index: index);
         },
-        itemCount: ingredients.length,
+        itemCount: categories.length,
       ),)
     ],),),
     Center(child: Text(
@@ -258,6 +258,7 @@ class _ExpandableListViewState extends State<ExpandableListView> {
 
   @override
   Widget build(BuildContext context) {
+    updateIngredientsList(categories[widget.index]);
     return new Container(
       margin: const EdgeInsets.only(left: 10.0),
       padding: const EdgeInsets.all(15.0),
@@ -269,7 +270,7 @@ class _ExpandableListViewState extends State<ExpandableListView> {
                 new Icon(icons[widget.index]),
                 Padding(padding: const EdgeInsets.all(10.0)),
                 new Text(
-                  ingredients[widget.index], style: TextStyle(fontSize: 19),
+                  categories[widget.index], style: TextStyle(fontSize: 19),
                 ),
                 new Row(
                   children: <Widget>[
@@ -299,7 +300,7 @@ class _ExpandableListViewState extends State<ExpandableListView> {
                       title: new Text(widget.ingredientsList[index]),)),
                       new IconButton(icon: new Icon(Icons.delete), onPressed: () {
                         removeOwnedIngredient(db, widget.ingredientsList[index]);
-                        updateIngredientsList(ingredients[widget.index]);
+                        updateIngredientsList(categories[widget.index]);
                       })
                     ],
                   )
@@ -368,9 +369,9 @@ class _ExpandableListViewState extends State<ExpandableListView> {
                 Navigator.of(context).pop(newIngredient);
                 if (newIngredient.isNotEmpty
                     && !widget.ingredientsList.contains(newIngredient)) {
-                  addOwnedIngredient(db, ingredients[widget.index],
+                  addOwnedIngredient(db, categories[widget.index],
                       newIngredient);
-                  updateIngredientsList(ingredients[widget.index]);
+                  updateIngredientsList(categories[widget.index]);
                 }
 
               },
