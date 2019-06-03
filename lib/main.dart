@@ -7,6 +7,7 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'database.dart';
 import 'package:sticky_headers/sticky_headers.dart';
+import 'package:autocomplete_textfield/autocomplete_textfield.dart';
 
 //example database
 Database db;
@@ -75,22 +76,7 @@ class _HomeState extends State<Home> {
   //Store different pages. Index 0 is Ingredients page, 1 is My Recipes, 3 is FAQ
   final List<Widget> _children = [
     new Container(child: new Column(children: <Widget>[
-      new Container(child: new Column(
-        children: <Widget>[
-          Padding(padding: const EdgeInsets.fromLTRB(8,15.0,8,0),
-            child: TextField(
-              onChanged: (searchIngredient) {
-                //TODO： deal with the input ingredient
-              },
-              decoration: InputDecoration(
-                  labelText: "Search For Ingredients",
-                  prefixIcon: Icon(Icons.search),
-                  enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.teal),
-                      borderRadius: BorderRadius.all(Radius.circular(25.0))),
-              ),))
-        ],
-      )),
+      new SearchBar(),
       new Expanded(child: new ListView.builder(
         itemBuilder: (BuildContext context, int index) {
           return new ExpandableListView(index: index);
@@ -174,6 +160,100 @@ class _HomeState extends State<Home> {
   }
 }
 
+//search bar in the home page
+class SearchBar extends StatefulWidget {
+  SearchBar() : super();
+
+  @override
+  _SearchBarState createState() => _SearchBarState();
+
+}
+
+class _SearchBarState extends State<SearchBar> {
+  AutoCompleteTextField searchTextField;
+  GlobalKey<AutoCompleteTextFieldState<StoredIngredients>> key = new GlobalKey();
+
+  //Example storedIngredients
+  List<StoredIngredients> stored = [StoredIngredients(name: "apple", category: "Fruit"),
+  StoredIngredients(name: "banana", category: "Fruit"),
+  StoredIngredients(name: "bananananana", category: "Fruit")];
+  bool loading = false;
+
+  static List<StoredIngredients> loadIngredients(String info) {
+    List<StoredIngredients> stored = [StoredIngredients(name: "apple", category: "Fruit"),
+    StoredIngredients(name: "banana", category: "Fruit"), StoredIngredients(name: "bananananana", category: "Fruit")
+    ];
+    return stored;
+  }
+  @override
+  void initState() {
+    //get StoredIngredients here?
+    super.initState();
+  }
+
+  //a row of autoComplete
+  Widget storedRow(StoredIngredients storedIngredients) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: <Widget>[
+        Text(
+          storedIngredients.name,
+          style: TextStyle(fontSize: 20.0),
+        ),
+        SizedBox(
+          width: 40.0,
+        ),
+        Text(
+          storedIngredients.category,
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+
+    return new Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: <Widget>[
+        loading
+            //? null
+            ? CircularProgressIndicator()
+            : searchTextField = AutoCompleteTextField<StoredIngredients>(
+          key: key,
+          clearOnSubmit: false,
+          suggestions: stored,
+          style: TextStyle(color: Colors.black, fontSize: 16.0),
+          decoration: InputDecoration(
+            contentPadding: EdgeInsets.fromLTRB(10.0, 30.0, 10.0, 20.0),
+            hintText: "Search For Ingredient",
+            hintStyle: TextStyle(color: Colors.black),
+          ),
+          itemFilter: (item, query) {
+            return item.name
+                .toLowerCase()
+                .startsWith(query.toLowerCase());
+          },
+          itemSorter: (a, b) {
+            return a.name.compareTo(b.name);
+          },
+          itemSubmitted: (item) {
+            setState(() {
+              searchTextField.textField.controller.text = item.name;
+            });
+          },
+          itemBuilder: (context, item) {
+            // ui for the autocompelete row
+            return storedRow(item);
+          },
+        ),
+      ],
+    );
+  }
+}
+
+
+
 //Ingredient dropdown
 class ExpandableListView extends StatefulWidget {
   final int index;
@@ -233,6 +313,8 @@ class _ExpandableListViewState extends State<ExpandableListView> {
               ;},
               itemCount: ingredientsList.length,
             )
+
+
 //Maybe useful for sticky header
 //          ExpandableContainer(
 //            expanded: expandFlag,
@@ -548,4 +630,13 @@ class IngredientUsed extends StatelessWidget {
 List<Recipe> _fetch_recipes() {
   return null;
 }
+
+class StoredIngredients {
+  String category;
+  String name;
+
+  StoredIngredients({Key key, this.name, this.category});
+}
+
+
 
