@@ -1,20 +1,15 @@
+import 'dart:_http';
 import 'dart:core';
 import 'package:sqflite/sqflite.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'main.dart';
 
-class OwnedIngredient {
-  final String name;
-  final String category;
-
-  OwnedIngredient(this.name, this.category);
-
-  Map<String, dynamic> toMap() {
-    return {'ingredient': name, 'category': category,};
-  }
-}
 
 // Add an ingredient to the 'owned' table
 Future addOwnedIngredient(Database db, String category, String ingredient) async {
-  await db.insert('owned', OwnedIngredient(ingredient, category).toMap());
+  await db.insert('owned',
+      OwnedIngredient(ingredient: ingredient, category: category).toMap());
 }
 
 // Removes an ingredient to the 'owned' table
@@ -29,25 +24,36 @@ Future<List> getOwnedIngredientList(Database db, String category) async {
   return mapToList(result, 'ingredient');
 }
 
-// Given list of ingredients, returns list of corresponding IDs
-Future<List<int>> getIngrIDs(Database db, List<String> ingredients) async {
-  List<int> ids = new List(ingredients.length);
-  List<Map> result = await db.query('ingredients', columns: ['id'],
-      where: '"ingredient" = ?', whereArgs: [ingredients]);
-  result.forEach((ingr) async {
-    ids.add(ingr['id']);
-  });
-  return ids;
+// Retrieves list of owned ingredients from the given category
+Future<List> getAllOwnedIngredients(Database db) async {
+  List<Map> result = await db.query('owned');
+  return mapToList(result, 'ingredient');
 }
 
-// Given list of ingredient IDs, finds recipes IDs witch matching ingredients
-Future<List> getMatchingRecipes(Database db, List<int> ingredients) async {
-  List<Map> result = await db.query('recipes', distinct: true,
-      columns: ['dish_id'], where: '"ingr_id" = ?', whereArgs: ingredients);
-
-  return mapToList(result, 'dish_id');
+// Gets a list of all ingredients appearing in the database
+Future<List<String>> getAllIngredientsList() async {
+  http.Response resp = await http.get('https://fft-group3.herokuapp.com/?req=list');
+  if (resp.statusCode == 200) {
+    return json.decode(resp.body);
+  }
+  throw Exception('Failed to load post');
 }
 
+//TODO: Finish
+Future<List<Recipe>> fetchRecipes(List<String> ownedIngredients) async {
+  String jsonOwned = json.encode(ownedIngredients);
+  var param = {
+    'req': 'recipe',
+    'owned' : jsonOwned
+  };
+  Uri uri = Uri.parse('https://fft-group3.herokuapp.com/').replace(queryParameters: param);
+  http.Response resp = await http.get(uri, headers: {HttpHeaders.contentTypeHeader: "application/json"} );
+
+  if (resp.statusCode == 200) {
+
+  }
+  throw Exception('Failed to load post');
+}
 
 // Returns a list of elements from one column
 List mapToList(List<Map> records, String key) {
@@ -58,21 +64,13 @@ List mapToList(List<Map> records, String key) {
   return list;
 }
 
-// Get ID of a dish
-Future<int> getDishID(Database db, String dish) async {
-  return (await db.query('dishes', columns: ['id'],
-              where: '"ingredient" = ?', whereArgs: [dish]))[0]['id'];
-}
+class OwnedIngredient {
+  final String ingredient;
+  final String category;
 
-// Gets ingredients of a recipe and their quantity/units
-Future<List> getIngredientsList(Database db, int dish_id) async {
-  List<Map> result = await db.query('recipes r JOIN ingredients i ON (r'
-      '.ingr_id = i.id)', columns: ['id', 'quantity', 'unit'], where: '"dish_id'
-      '" = ?', whereArgs: [dish_id.toString()]);
-  return result;
-}
+  OwnedIngredient({this.ingredient, this.category});
 
-// Gets info needed to display recipe
-void displayRecipes(Database db, List<int> recipes) async {
-  List<Map> result = await db.query('dishes', distinct: true);
+  Map<String, dynamic> toMap() {
+    return {'ingredient': ingredient, 'category': category,};
+  }
 }

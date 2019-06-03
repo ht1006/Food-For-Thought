@@ -24,16 +24,6 @@ final List<IconData> icons
 //main page
 void main() => runApp(MyApp());
 
-// Open existing database
-//Future openAppDatabase() async {
-//  var databasesPath = await getDatabasesPath();
-//  var path = join(databasesPath, 'app.db');
-//  ByteData data = await rootBundle.load("./assets/database.db");
-//  List<int> bytes = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
-//  await File(path).writeAsBytes(bytes);
-//  db = await openDatabase(path);
-//}
-
 Future openAppDatabase() async {
   var databasesPath = await getDatabasesPath();
   var path = join(databasesPath, 'app.db');
@@ -42,15 +32,13 @@ Future openAppDatabase() async {
     try {
       await Directory(dirname(path)).create(recursive: true);
     } catch (_) {}
-
-    ByteData data = await rootBundle.load(join("assets", "database.db"));
-    List<int> bytes = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
-    await File(path).writeAsBytes(bytes, flush: true);
   }
 
-  db = await openDatabase(path);
+  db = await openDatabase(path, version: 1, onCreate: (db, version) {
+    return db.execute('CREATE TABLE owned(ingredient TEXT NOT NULL, '
+        'category TEXT NOT NULL, expire DATE)');
+  });
 }
-
 
 class MyApp extends StatelessWidget {
   //static const String _title = 'Flutter Code Sample';
@@ -171,40 +159,39 @@ class SearchBar extends StatefulWidget {
 
 class _SearchBarState extends State<SearchBar> {
   AutoCompleteTextField searchTextField;
-  GlobalKey<AutoCompleteTextFieldState<StoredIngredients>> key = new GlobalKey();
+  GlobalKey<AutoCompleteTextFieldState<OwnedIngredient>> key = new GlobalKey();
 
-  //Example storedIngredients
-  List<StoredIngredients> stored = [StoredIngredients(name: "apple", category: "Fruit"),
-  StoredIngredients(name: "banana", category: "Fruit"),
-  StoredIngredients(name: "bananananana", category: "Fruit")];
+  //Example OwnedIngredient
+  List<OwnedIngredient> stored = [];
   bool loading = false;
 
-  static List<StoredIngredients> loadIngredients(String info) {
-    List<StoredIngredients> stored = [StoredIngredients(name: "apple", category: "Fruit"),
-    StoredIngredients(name: "banana", category: "Fruit"), StoredIngredients(name: "bananananana", category: "Fruit")
+  static List<OwnedIngredient> loadIngredients(String info) {
+    List<OwnedIngredient> stored = [OwnedIngredient(ingredient: "apple", category: "Fruit"),
+    OwnedIngredient(ingredient: "banana", category: "Fruit"), OwnedIngredient(ingredient: "bananananana", category: "Fruit")
     ];
     return stored;
   }
+
   @override
   void initState() {
-    //get StoredIngredients here?
+    //get OwnedIngredient here?
     super.initState();
   }
 
   //a row of autoComplete
-  Widget storedRow(StoredIngredients storedIngredients) {
+  Widget storedRow(OwnedIngredient OwnedIngredient) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: <Widget>[
         Text(
-          storedIngredients.name,
+          OwnedIngredient.ingredient,
           style: TextStyle(fontSize: 20.0),
         ),
         SizedBox(
           width: 40.0,
         ),
         Text(
-          storedIngredients.category,
+          OwnedIngredient.category,
         ),
       ],
     );
@@ -219,7 +206,7 @@ class _SearchBarState extends State<SearchBar> {
         loading
             //? null
             ? CircularProgressIndicator()
-            : searchTextField = AutoCompleteTextField<StoredIngredients>(
+            : searchTextField = AutoCompleteTextField<OwnedIngredient>(
           key: key,
           clearOnSubmit: false,
           suggestions: stored,
@@ -230,16 +217,16 @@ class _SearchBarState extends State<SearchBar> {
             hintStyle: TextStyle(color: Colors.black),
           ),
           itemFilter: (item, query) {
-            return item.name
+            return item.ingredient
                 .toLowerCase()
                 .startsWith(query.toLowerCase());
           },
           itemSorter: (a, b) {
-            return a.name.compareTo(b.name);
+            return a.ingredient.compareTo(b.ingredient);
           },
           itemSubmitted: (item) {
             setState(() {
-              searchTextField.textField.controller.text = item.name;
+              searchTextField.textField.controller.text = item.ingredient;
             });
           },
           itemBuilder: (context, item) {
@@ -492,24 +479,16 @@ Future<List> getFoodTypeList(String foodType) {
 
 //Recipe generator page
 class RecipeGen extends StatelessWidget {
-  List<Recipe> example
-    = <Recipe>[new Recipe(name: 'Shakshouka',
-                          ingredientsUsed: null,
-                          directions: 'do this do that'),
-               new Recipe(name: 'Fattoush',
-                          ingredientsUsed: null,
-                          directions: 'hi there, some instructions here'),
-               new Recipe(name: 'Fried Chicken',
-                          ingredientsUsed: null,
-                          directions: 'fry the chicken')];
-  List<String> exampleImages
-    = <String>[
-      "https://bit.ly/2W5WzsF", "https://bit.ly/312xmCW", "https://bit.ly/2W9jXW6"
-    ];
+  List<Recipe> recipesGenerated;
+
+  Future getRecipes() async {
+    List<String> ownedIngredients = await getAllOwnedIngredients(db);
+    recipesGenerated = await fetchRecipes(ownedIngredients);
+  }
 
   @override
   Widget build(BuildContext context) {
-    List<Recipe> recipesGenerated = _fetch_recipes();
+    getRecipes();
     int numRecipes = recipesGenerated == null ? 0 : recipesGenerated.length;
     return Scaffold(
         appBar: AppBar(
@@ -521,8 +500,7 @@ class RecipeGen extends StatelessWidget {
           child: ListView.builder(
             scrollDirection: Axis.vertical,
             shrinkWrap: true,
-            //itemCount: numRecipes instead of example
-            itemCount: example.length,
+            itemCount: numRecipes,
             itemBuilder: (BuildContext context, int index) {
               return _makeRecipeCard(index);
             },
@@ -541,7 +519,7 @@ class RecipeGen extends StatelessWidget {
         decoration: BoxDecoration(
             image: DecorationImage(
               //use image field from Recipe class instead
-              image: new NetworkImage(exampleImages[index]),
+              image: new NetworkImage(recipesGenerated[index].image),
               fit: BoxFit.cover,
               alignment: Alignment.topCenter,
             ),
@@ -558,8 +536,7 @@ class RecipeGen extends StatelessWidget {
     return ListTile(
         contentPadding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 40.0),
         title: Text(
-          //below, it would be recipesGenerated[index].name instead of example
-          example[index].name,
+          recipesGenerated[index].name,
           style: TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.bold,
@@ -591,12 +568,25 @@ class RecipeGen extends StatelessWidget {
 //Recipe class - stores info regarding each recipe
 class Recipe extends StatelessWidget {
   final String name;
-  // insert picture declaration here
-  final List<IngredientUsed> ingredientsUsed;
   final String directions;
+  final String image;
+  final List<IngredientUsed> ingredientsUsed;
 
-  const Recipe({Key key, this.name, this.directions, this.ingredientsUsed}) : super(key: key);
+  const Recipe({Key key, this.name, this.directions, this.image, this.ingredientsUsed}) : super(key: key);
 
+  factory Recipe.decodeJson(Map<String, dynamic> json) {
+    List<IngredientUsed> ingredients = [];
+    List<dynamic> jsonIngredients = json['ingredients'];
+    jsonIngredients.forEach((i) {
+      ingredients.add(IngredientUsed.decodeJson(i));
+    });
+    return Recipe(
+      name: json['name'],
+      directions: json['directions'],
+      ingredientsUsed: ingredients,
+      image: json['image'],
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -620,22 +610,19 @@ class IngredientUsed extends StatelessWidget {
 
   const IngredientUsed({Key key, this.ingredientName, this.quantity, this.unit}) : super(key: key);
 
+  factory IngredientUsed.decodeJson(Map<String, dynamic> json) {
+    return IngredientUsed(
+      ingredientName: json['name'],
+      quantity: json['quantity'],
+      unit: json['unit'],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Text('$quantity' + ' ' + unit + ' ' + ingredientName);
   }
 
-}
-
-List<Recipe> _fetch_recipes() {
-  return null;
-}
-
-class StoredIngredients {
-  String category;
-  String name;
-
-  StoredIngredients({Key key, this.name, this.category});
 }
 
 
