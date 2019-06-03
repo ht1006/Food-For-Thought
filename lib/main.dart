@@ -6,6 +6,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'database.dart';
+import 'package:sticky_headers/sticky_headers.dart';
 
 //example database
 Database db;
@@ -223,16 +224,28 @@ class _ExpandableListViewState extends State<ExpandableListView> {
             expanded: expandFlag,
             index: ingredientsList.length,
             child: new ListView.builder(
-              itemBuilder: (BuildContext context, int index) {
-                return new Container(
-                  child: new ListTile(
-                    title: new Text(
-                      ingredientsList[index],
-                    ),
-                  ),
-                );},
+            itemBuilder: (BuildContext context, int index) {
+              return new Container(child: new Row(children: <Widget>[
+                new Expanded(child: new ListTile(
+                title: new Text(ingredientsList[index]),)),
+                new IconButton(icon: new Icon(Icons.delete), onPressed: () =>
+                    deleteIngredient(context, index))],))
+              ;},
               itemCount: ingredientsList.length,
             )
+//Maybe useful for sticky header
+//          ExpandableContainer(
+//            expanded: expandFlag,
+//            index: ingredientsList.length,
+//            child: new ListView.builder(
+//                itemBuilder: (BuildContext context, int index) {
+//                  return new StickyHeader(
+//                  header: new Text(ingredientsList[index],),
+//                  content: new ListTile(
+//                    title: new Text(ingredientsList[index],
+//                    ),
+//                  ),);})
+//          )
           )
         ],
       ),
@@ -275,7 +288,6 @@ class _ExpandableListViewState extends State<ExpandableListView> {
               onPressed: () {
                 Navigator.of(context).pop(newIngredient);
                 if (newIngredient.isNotEmpty) {
-                  print("hey");
                   addOwnedIngredient(db, ingredients[widget.index],
                       newIngredient);
                   updateIngredientsList(ingredients[widget.index]);
@@ -287,6 +299,11 @@ class _ExpandableListViewState extends State<ExpandableListView> {
         );
       },
     );
+  }
+
+  //TODO: delete the ingredient
+  deleteIngredient(BuildContext context, int index) {
+    print("Hey yo wassup I wanna delete " + ingredientsList[index]);
   }
 
 }
