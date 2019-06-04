@@ -585,12 +585,24 @@ class _RecipeGenState extends State<RecipeGen> {
               ]),
         ),
         trailing:
-        Icon(Icons.keyboard_arrow_right, color: Colors.white, size: 30.0));
+        Icon(Icons.keyboard_arrow_right, color: Colors.white, size: 30.0),
+        onTap: (){
+          Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) =>
+                  Recipe(
+                      name: widget.recipesGenerated[index].name,
+                      directions: widget.recipesGenerated[index].directions,
+                      image: widget.recipesGenerated[index].image,
+                      ingredientsUsed: widget.recipesGenerated[index].ingredientsUsed))
+          );
+        });
   }
 }
 
 //Recipe class - stores info regarding each recipe
-class Recipe extends StatelessWidget {
+class Recipe extends StatefulWidget {
+
   final String name;
   final String directions;
   final String image;
@@ -613,18 +625,72 @@ class Recipe extends StatelessWidget {
   }
 
   @override
+  _RecipeState createState() => new _RecipeState();
+
+}
+
+class _RecipeState extends State<Recipe> {
+  //TODO: store favourite recipe in database
+  bool likedRecipe = false;
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-          title: Text(name, style: new TextStyle(fontSize: 25.0)),
-          backgroundColor: Colors.teal
-      ),
-      body: Container(
-
-      )
+        appBar: AppBar(
+            title: Text(widget.name, style: new TextStyle(fontSize: 25.0)),
+            actions: <Widget>[
+              IconButton(
+                  icon: likedRecipe ? Icon(Icons.favorite) : Icon(Icons.favorite_border),
+                  color: likedRecipe ? Colors.red : null,
+                  onPressed: () {
+                    setState(() {
+                      likedRecipe = !likedRecipe;
+                    });
+                  }
+              )
+            ],
+            backgroundColor: Colors.teal
+        ),
+        body: SingleChildScrollView(
+            scrollDirection: Axis.vertical,
+            child: Container(
+              padding: const EdgeInsets.all(8.0),
+              child: new Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Image(image: NetworkImage(widget.image)),
+                  Padding(padding: const EdgeInsets.all(8.0)),
+                  Text("Ingredients", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 25.0, color: Colors.teal)),
+                  Padding(padding: const EdgeInsets.all(8.0)),
+                  Column(children: _displayIngredientsUsed(widget.ingredientsUsed, context)),
+                  Padding(padding: const EdgeInsets.all(8.0)),
+                  Text("Directions", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 25.0, color: Colors.teal)),
+                  Padding(padding: const EdgeInsets.all(8.0)),
+                  _displayDirections(widget.directions, context)
+                ],),
+            )
+        )
     );
   }
 
+  _displayIngredientsUsed(List<IngredientUsed> ingredientsUsed, BuildContext context) {
+    List<Widget> columnContent = [];
+    for (IngredientUsed ingr in ingredientsUsed) {
+      columnContent.add(ingr.build(context));
+    }
+    return columnContent;
+  }
+
+  _displayDirections(String directions, BuildContext context) {
+    var splitDir = directions.split("\\n").map((i) {
+      return Container(
+          child: new Column(children: <Widget>[
+            Text(i, style: TextStyle(fontSize: 20.0)),
+            Padding(padding: const EdgeInsets.all(5.0))
+          ]));
+    }).toList();
+    return Column(children: splitDir);
+  }
 }
 
 class IngredientUsed extends StatelessWidget {
@@ -644,7 +710,10 @@ class IngredientUsed extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text('$quantity' + ' ' + unit + ' ' + ingredientName);
+    return Align(
+        alignment: Alignment.centerLeft,
+        child: Container(child: Text((quantity == 0 ? '' : '$quantity ') + unit + ' ' + ingredientName,
+            style: TextStyle(fontSize: 20.0))));
   }
 
 }
