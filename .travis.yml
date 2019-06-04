@@ -42,9 +42,9 @@ deploy:
   skip_cleanup: true
   on:
     repo: xym0112/FoodForThought
-  branches:
-    only:
-      - master
+    branches:
+      only:
+        - master
 cache:
   directories:
     - "$HOME/.pub-cache"
