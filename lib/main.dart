@@ -152,61 +152,36 @@ class _HomeState extends State<Home> {
 //search bar in the home page
 class SearchBar extends StatefulWidget {
   SearchBar() : super();
-  List<OwnedIngredient> stored;
+
   @override
   _SearchBarState createState() => _SearchBarState();
-
 }
 
 class _SearchBarState extends State<SearchBar> {
   AutoCompleteTextField searchTextField;
   GlobalKey<AutoCompleteTextFieldState<OwnedIngredient>> key = new GlobalKey();
 
-  @override
-  void initState() {
-    super.initState();
-    getOwnedIngredientsPair();
-  }
+  //Example storedIngredients
+  List<OwnedIngredient> stored = [];
 
-  void getOwnedIngredientsPair() async {
-    List<OwnedIngredient> list = [];
-    print("In getOwnedIngredientsPair");
-    categories.forEach((cat) async {
-      List ingredients = await getOwnedIngredientList(db, cat);
-      ingredients.forEach((ingr) {
-        list.add(OwnedIngredient(ingredient: ingr, category: cat));
-      });
-    });
-    print("list" + list.length.toString());
-    widget.stored = list;
-//    print("In owned");
-//    List ingredients = await getAllOwnedIngredients(db);
-//    print("MylengthHIIIII: " + ingredients.length.toString());
-//    List categories = await getAllOwnedIngredientsCategories(db);
-//    print("Mylengt2hHIIIII: " + categories.length.toString());
-//
-//    List res;
-//    for (var i = 0; i < ingredients.length; i++) {
-//      res.add(OwnedIngredient(ingredient: ingredients[i], category: categories[i]));
-//    }
-//    print(res);
-//    widget.stored = res;
+  Future loadIngredients() async {
+    stored = await getAllOwnedIngredients(db);
   }
 
   //a row of autoComplete
-  Widget storedRow(OwnedIngredient OwnedIngredient) {
+  Widget storedRow(OwnedIngredient ownedIngredient) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: <Widget>[
         Text(
-          OwnedIngredient.ingredient,
+          ownedIngredient.ingredient,
           style: TextStyle(fontSize: 20.0),
         ),
         SizedBox(
           width: 40.0,
         ),
         Text(
-          OwnedIngredient.category,
+          ownedIngredient.category,
         ),
       ],
     );
@@ -214,9 +189,7 @@ class _SearchBarState extends State<SearchBar> {
 
   @override
   Widget build(BuildContext context) {
-    getOwnedIngredientsPair();
-    print(widget.stored);
-
+    loadIngredients();
     return new Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: <Widget>[
@@ -224,7 +197,7 @@ class _SearchBarState extends State<SearchBar> {
           searchTextField = AutoCompleteTextField<OwnedIngredient>(
           key: key,
           clearOnSubmit: false,
-          suggestions: widget.stored,
+          suggestions: stored,
           style: TextStyle(color: Colors.black, fontSize: 16.0),
             decoration: InputDecoration(
               prefixIcon: Icon(Icons.search, color: Colors.teal),
@@ -426,14 +399,15 @@ class AddIngredient extends StatefulWidget {
 
 class _AddIngredientState extends State<AddIngredient> {
 
-  @override
-  void initState(){
-    super.initState();
+  List allIngredients = [];
+
+  Future retrieveAllIngredientsList() async {
+    allIngredients = await getAllIngredientsList();
   }
 
   @override
   Widget build(BuildContext context) {
-
+    retrieveAllIngredientsList();
     return new Column(
       children: <Widget>[
         new TextField(
@@ -660,8 +634,8 @@ class IngredientUsed extends StatelessWidget {
 }
 
 class OwnedIngredient {
-  final String ingredient;
-  final String category;
+  String ingredient;
+  String category;
 
   OwnedIngredient({Key key, this.ingredient, this.category});
 

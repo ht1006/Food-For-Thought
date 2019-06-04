@@ -24,21 +24,16 @@ Future<List> getOwnedIngredientList(Database db, String category) async {
   return mapToList(result, 'ingredient');
 }
 
-// Retrieves list of owned ingredients from the given category
 Future<List> getAllOwnedIngredients(Database db) async {
-  List<Map> result = await db.query("owned");
-  print("done retrieving");
-  return mapToList(result, 'ingredient');
-}
-
-// Retrieves list of owned ingredients from the given category
-Future<List> getAllOwnedIngredientsCategories(Database db) async {
   List<Map> result = await db.query('owned');
-  return mapToList(result, 'category');
+  List<OwnedIngredient> list = [];
+  result.forEach((ingr) => list.add(
+        OwnedIngredient(ingredient: ingr['name'], category: ingr['category'])));
+  return list;
 }
 
 // Gets a list of all ingredients appearing in the database
-Future<List<String>> getAllIngredientsList() async {
+Future<List> getAllIngredientsList() async {
   http.Response resp = await http.get('https://fft-group3.herokuapp.com/?req=list');
   if (resp.statusCode == 200) {
     return json.decode(resp.body);
@@ -57,7 +52,7 @@ Future<List<Recipe>> fetchRecipes(List<String> ownedIngredients) async {
   http.Response resp = await http.get(uri, headers: {HttpHeaders.contentTypeHeader: "application/json"} );
   if (resp.statusCode == 200) {
     List<Recipe> recipes = [];
-    List<Map> jsonList = json.decode(resp.body);
+    List jsonList = json.decode(resp.body);
     jsonList.forEach((obj) {
       recipes.add(Recipe.decodeJson(obj));
     });
