@@ -46,7 +46,7 @@ Future<List> getOwnedIngredientList(String category) async {
   return mapToList(result, 'name');
 }
 
-Future<List> getAllOwnedIngredients() async {
+Future<List<OwnedIngredient>> getAllOwnedIngredients() async {
   List<Map> result = await db.query('owned');
   List<OwnedIngredient> list = [];
   result.forEach((ingr) => list.add(

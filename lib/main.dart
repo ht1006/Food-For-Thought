@@ -163,15 +163,16 @@ class _SearchBarState extends State<SearchBar> {
 
   @override
   void initState() {
-    super.initState();
     getAllOwnedIngredients().then((result) {
       setState(() {
         widget.stored = result;
       });
     });
+    super.initState();
   }
 
   //a row of autoComplete
+  //TODO: deorate rows
   Widget storedRow(OwnedIngredient ownedIngredient) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -182,6 +183,7 @@ class _SearchBarState extends State<SearchBar> {
         ),
         SizedBox(
           width: 40.0,
+          height: 25,
         ),
         Text(
           ownedIngredient.category,
@@ -192,47 +194,51 @@ class _SearchBarState extends State<SearchBar> {
 
   @override
   Widget build(BuildContext context) {
-    return new Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: <Widget>[
-          Padding(padding: EdgeInsets.symmetric(vertical: 5.0)),
-          searchTextField = AutoCompleteTextField<OwnedIngredient>(
-          key: key,
-          clearOnSubmit: false,
-          suggestions: widget.stored,
-          style: TextStyle(color: Colors.black, fontSize: 16.0),
-            decoration: InputDecoration(
-              prefixIcon: Icon(Icons.search, color: Colors.teal),
-              enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.teal),
-                  borderRadius: BorderRadius.all(Radius.circular(25.0))),
-              focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.teal),
-                  borderRadius: BorderRadius.all(Radius.circular(25.0))),
-              contentPadding: EdgeInsets.all(20.0),
-              hintText: "Search For Ingredient",
-              hintStyle: TextStyle(color: Colors.black),
+    return new FutureBuilder(
+      future: getAllOwnedIngredients(),
+      builder: (BuildContext context, AsyncSnapshot snapshot) {
+        return snapshot.hasData? new Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: <Widget>[
+            Padding(padding: EdgeInsets.symmetric(vertical: 5.0)),
+            searchTextField = AutoCompleteTextField<OwnedIngredient>(
+              key: key,
+              clearOnSubmit: false,
+              suggestions: snapshot.data,
+              style: TextStyle(color: Colors.black, fontSize: 16.0),
+              decoration: InputDecoration(
+                prefixIcon: Icon(Icons.search, color: Colors.teal),
+                enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.teal),
+                    borderRadius: BorderRadius.all(Radius.circular(25.0))),
+                focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.teal),
+                    borderRadius: BorderRadius.all(Radius.circular(25.0))),
+                contentPadding: EdgeInsets.all(20.0),
+                hintText: "Search For Ingredient",
+                hintStyle: TextStyle(color: Colors.black),
+              ),
+              itemFilter: (item, query) {
+                return item.name
+                    .toLowerCase()
+                    .startsWith(query.toLowerCase());
+              },
+              itemSorter: (a, b) {
+                return a.name.compareTo(b.name);
+              },
+              itemSubmitted: (item) {
+                setState(() {
+                  searchTextField.textField.controller.text = item.name;
+                });
+              },
+              itemBuilder: (context, item) {
+                // ui for the autocompelete row
+                return storedRow(item);
+              },
             ),
-          itemFilter: (item, query) {
-            return item.name
-                .toLowerCase()
-                .startsWith(query.toLowerCase());
-          },
-          itemSorter: (a, b) {
-            return a.name.compareTo(b.name);
-          },
-          itemSubmitted: (item) {
-            setState(() {
-              searchTextField.textField.controller.text = item.name;
-            });
-          },
-          itemBuilder: (context, item) {
-            // ui for the autocompelete row
-            return storedRow(item);
-          },
-        ),
-      ],
-    );
+          ],
+        ) : new LinearProgressIndicator(backgroundColor: Colors.teal);
+    });
   }
 }
 
@@ -289,6 +295,7 @@ class _ExpandableListViewState extends State<ExpandableListView> {
             expanded: expandFlag,
             index: widget.ingredientsList.length,
             child: new ListView.builder(
+            physics: const NeverScrollableScrollPhysics(),
             itemBuilder: (BuildContext context, int index) {
               return new Container(
                   child: new Row(
@@ -400,15 +407,12 @@ class AddIngredient extends StatefulWidget {
 
 class _AddIngredientState extends State<AddIngredient> {
 
-  List allIngredients = [];
-
-  Future retrieveAllIngredientsList() async {
-    allIngredients = await getAllIngredientsList();
-  }
-
   @override
   Widget build(BuildContext context) {
-    retrieveAllIngredientsList();
+    List allIngredients = [];
+    getAllIngredientsList().then((list) {
+      allIngredients = list;
+    });
     return new Column(
       children: <Widget>[
         new TextField(
