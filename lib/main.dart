@@ -59,6 +59,7 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
+  static bool enableSearch = false;
   int _selectedIndex = 0;
   final List<String> _appBar = ['Ingredients', 'My Recipes', 'Save the Planet'];
 
@@ -93,6 +94,14 @@ class _HomeState extends State<Home> {
         title: Text(_appBar[_selectedIndex], style: new TextStyle(fontSize: 25.0)),
         backgroundColor: Colors.teal,
         actions: <Widget>[
+          _selectedIndex == 0 ? IconButton(
+            icon: Icon(Icons.search),
+            onPressed: () {
+              setState(() {
+                enableSearch = !enableSearch;
+              });
+            }
+          ) : Container(width: 0, height: 0),
           IconButton(
             icon: Icon(Icons.local_dining),
             onPressed: () {
@@ -104,7 +113,15 @@ class _HomeState extends State<Home> {
           ),
         ],
       ),
-      body:_children[_selectedIndex],
+      body: _selectedIndex == 0 ? new Container(child: new Column(children: <Widget>[
+        enableSearch ? new SearchBar() : new Container(width: 0, height: 0),
+        new Expanded(child: new ListView.builder(
+          itemBuilder: (BuildContext context, int index) {
+            return new ExpandableListView(index: index);
+          },
+          itemCount: categories.length,
+        ),)
+      ],),) :_children[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         items: [
           BottomNavigationBarItem(
