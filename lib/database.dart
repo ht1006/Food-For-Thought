@@ -4,31 +4,60 @@ import 'package:sqflite/sqflite.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'main.dart';
+import 'package:path/path.dart';
+import 'package:sqflite/sqflite.dart';
 
+Database db;
+
+Future openAppDatabase() async {
+  if (db != null) return;
+
+  var databasesPath = await getDatabasesPath();
+  var path = join(databasesPath, 'app.db');
+
+  if (!(await databaseExists(path))) {
+    try {
+      await Directory(dirname(path)).create(recursive: true);
+    } catch (_) {}
+  }
+
+  db = await openDatabase(path, version: 1, onCreate: (db, version) {
+    return db.execute('CREATE TABLE owned(name TEXT NOT NULL, '
+        'category TEXT NOT NULL, expire DATE)');
+  });
+}
 
 // Add an ingredient to the 'owned' table
-Future addOwnedIngredient(Database db, String category, String ingredient) async {
+Future addOwnedIngredient(String category, String ingredient) async {
   await db.insert('owned',
-      OwnedIngredient(ingredient: ingredient, category: category).toMap());
+      OwnedIngredient(name: ingredient, category: category).toMap());
 }
 
 // Removes an ingredient to the 'owned' table
-Future removeOwnedIngredient(Database db, String ingredient) async {
-  await db.delete('owned', where: '"ingredient" = ?', whereArgs: [ingredient]);
+Future removeOwnedIngredient(String ingredient) async {
+  await db.delete('owned', where: '"name" = ?', whereArgs: [ingredient]);
 }
 
 // Retrieves list of owned ingredients from the given category
-Future<List> getOwnedIngredientList(Database db, String category) async {
+Future<List> getOwnedIngredientList(String category) async {
+  if (db == null) return [];
   List<Map> result = await db.query('owned', where: '"category" = ?',
       whereArgs: [category], distinct: true);
-  return mapToList(result, 'ingredient');
+  return mapToList(result, 'name');
 }
 
-Future<List> getAllOwnedIngredients(Database db) async {
+Future<List> getAllOwnedIngredients() async {
   List<Map> result = await db.query('owned');
   List<OwnedIngredient> list = [];
   result.forEach((ingr) => list.add(
-        OwnedIngredient(ingredient: ingr['name'], category: ingr['category'])));
+        OwnedIngredient(name: ingr['name'], category: ingr['category'])));
+  return list;
+}
+
+Future<List> getAllOwnedIngredientsList() async {
+  List<Map> result = await db.query('owned');
+  List<String> list = [];
+  result.forEach((ingr) => list.add(ingr['name']));
   return list;
 }
 
@@ -50,9 +79,11 @@ Future<List<Recipe>> fetchRecipes(List<String> ownedIngredients) async {
   };
   Uri uri = Uri.parse('https://fft-group3.herokuapp.com/').replace(queryParameters: param);
   http.Response resp = await http.get(uri, headers: {HttpHeaders.contentTypeHeader: "application/json"} );
+
   if (resp.statusCode == 200) {
     List<Recipe> recipes = [];
     List jsonList = json.decode(resp.body);
+
     jsonList.forEach((obj) {
       recipes.add(Recipe.decodeJson(obj));
     });

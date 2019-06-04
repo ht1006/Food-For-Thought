@@ -1,16 +1,10 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:path/path.dart';
-import 'package:sqflite/sqflite.dart';
 import 'database.dart';
-import 'package:sticky_headers/sticky_headers.dart';
 import 'package:autocomplete_textfield/autocomplete_textfield.dart';
 
 //example database
-Database db;
 final List<String> categories
 = <String>['Fruit', 'Vegetables', 'Dairy', 'Meat', 'Spices'];
 List<String> menuChoices = <String>['Ingredients','My Recipes','Save the Planet'
@@ -23,22 +17,6 @@ final List<IconData> icons
 
 //main page
 void main() => runApp(MyApp());
-
-Future openAppDatabase() async {
-  var databasesPath = await getDatabasesPath();
-  var path = join(databasesPath, 'app.db');
-
-  if (!(await databaseExists(path))) {
-    try {
-      await Directory(dirname(path)).create(recursive: true);
-    } catch (_) {}
-  }
-
-  db = await openDatabase(path, version: 1, onCreate: (db, version) {
-    return db.execute('CREATE TABLE owned(ingredient TEXT NOT NULL, '
-        'category TEXT NOT NULL, expire DATE)');
-  });
-}
 
 class MyApp extends StatelessWidget {
   //static const String _title = 'Flutter Code Sample';
@@ -84,6 +62,10 @@ class _HomeState extends State<Home> {
     )),
 
   ];
+
+  Future<List> loadIngredients() async {
+    return await getAllOwnedIngredients();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -168,7 +150,7 @@ class _HomeState extends State<Home> {
 
 //search bar in the home page
 class SearchBar extends StatefulWidget {
-  SearchBar() : super();
+  List<OwnedIngredient> stored = [];
 
   @override
   _SearchBarState createState() => _SearchBarState();
@@ -178,11 +160,15 @@ class _SearchBarState extends State<SearchBar> {
   AutoCompleteTextField searchTextField;
   GlobalKey<AutoCompleteTextFieldState<OwnedIngredient>> key = new GlobalKey();
 
-  //Example storedIngredients
-  List<OwnedIngredient> stored = [];
 
-  Future loadIngredients() async {
-    stored = await getAllOwnedIngredients(db);
+  @override
+  void initState() {
+    super.initState();
+    getAllOwnedIngredients().then((result) {
+      setState(() {
+        widget.stored = result;
+      });
+    });
   }
 
   //a row of autoComplete
@@ -191,7 +177,7 @@ class _SearchBarState extends State<SearchBar> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: <Widget>[
         Text(
-          ownedIngredient.ingredient,
+          ownedIngredient.name,
           style: TextStyle(fontSize: 20.0),
         ),
         SizedBox(
@@ -206,7 +192,6 @@ class _SearchBarState extends State<SearchBar> {
 
   @override
   Widget build(BuildContext context) {
-    loadIngredients();
     return new Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: <Widget>[
@@ -214,7 +199,7 @@ class _SearchBarState extends State<SearchBar> {
           searchTextField = AutoCompleteTextField<OwnedIngredient>(
           key: key,
           clearOnSubmit: false,
-          suggestions: stored,
+          suggestions: widget.stored,
           style: TextStyle(color: Colors.black, fontSize: 16.0),
             decoration: InputDecoration(
               prefixIcon: Icon(Icons.search, color: Colors.teal),
@@ -229,16 +214,16 @@ class _SearchBarState extends State<SearchBar> {
               hintStyle: TextStyle(color: Colors.black),
             ),
           itemFilter: (item, query) {
-            return item.ingredient
+            return item.name
                 .toLowerCase()
                 .startsWith(query.toLowerCase());
           },
           itemSorter: (a, b) {
-            return a.ingredient.compareTo(b.ingredient);
+            return a.name.compareTo(b.name);
           },
           itemSubmitted: (item) {
             setState(() {
-              searchTextField.textField.controller.text = item.ingredient;
+              searchTextField.textField.controller.text = item.name;
             });
           },
           itemBuilder: (context, item) {
@@ -317,7 +302,7 @@ class _ExpandableListViewState extends State<ExpandableListView> {
                           textColor:Colors.white,
                           child: Text("Expires in  days")),
                       new IconButton(icon: new Icon(Icons.delete), onPressed: () {
-                        removeOwnedIngredient(db, widget.ingredientsList[index]);
+                        removeOwnedIngredient(widget.ingredientsList[index]);
                         updateIngredientsList(categories[widget.index]);
                       })
                     ],
@@ -387,8 +372,7 @@ class _ExpandableListViewState extends State<ExpandableListView> {
                 Navigator.of(context).pop(newIngredient);
                 if (newIngredient.isNotEmpty
                     && !widget.ingredientsList.contains(newIngredient)) {
-                  addOwnedIngredient(db, categories[widget.index],
-                      newIngredient);
+                  addOwnedIngredient(categories[widget.index], newIngredient);
                   updateIngredientsList(categories[widget.index]);
                 }
 
@@ -499,22 +483,33 @@ class ExpandableContainer extends StatelessWidget {
 
 //Return the corresponding specific ingredient list according to the foodType
 Future<List> getFoodTypeList(String foodType) {
-  return getOwnedIngredientList(db, foodType);
+  return getOwnedIngredientList(foodType);
 }
 
-//Recipe generator page
-class RecipeGen extends StatelessWidget {
-  List<Recipe> recipesGenerated;
+class RecipeGen extends StatefulWidget {
+  List<Recipe> recipesGenerated= [];
 
-  Future getRecipes() async {
-    List<String> ownedIngredients = await getAllOwnedIngredients(db);
-    recipesGenerated = await fetchRecipes(ownedIngredients);
+  @override
+  _RecipeGenState createState() => new _RecipeGenState();
+}
+//Recipe generator page
+class _RecipeGenState extends State<RecipeGen> {
+
+  @override
+  void initState() {
+    super.initState();
+    getAllOwnedIngredientsList().then((ownedIngredients) {
+      fetchRecipes(ownedIngredients).then((recipes) {
+        setState(() {
+          widget.recipesGenerated = recipes;
+        });
+      });
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    getRecipes();
-    int numRecipes = recipesGenerated == null ? 0 : recipesGenerated.length;
+    int numRecipes = widget.recipesGenerated == null ? 0 : widget.recipesGenerated.length;
     return Scaffold(
         appBar: AppBar(
             title: Text(
@@ -544,9 +539,9 @@ class RecipeGen extends StatelessWidget {
         decoration: BoxDecoration(
             image: DecorationImage(
               //use image field from Recipe class instead
-              image: new NetworkImage(recipesGenerated[index].image),
+              image: new NetworkImage(widget.recipesGenerated[index].image),
               fit: BoxFit.cover,
-              alignment: Alignment.topCenter,
+              alignment: Alignment.center,
             ),
         ),
         child: _makeRecipeListTile(index)
@@ -554,14 +549,14 @@ class RecipeGen extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10.0),
       ),
-    );  
+    );
   }
 
   Widget _makeRecipeListTile(int index) {
     return ListTile(
         contentPadding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 40.0),
         title: Text(
-          recipesGenerated[index].name,
+          widget.recipesGenerated[index].name,
           style: TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.bold,
@@ -651,13 +646,13 @@ class IngredientUsed extends StatelessWidget {
 }
 
 class OwnedIngredient {
-  String ingredient;
+  String name;
   String category;
 
-  OwnedIngredient({Key key, this.ingredient, this.category});
+  OwnedIngredient({Key key, this.name, this.category});
 
   Map<String, dynamic> toMap() {
-    return {'ingredient': ingredient, 'category': category,};
+    return {'name': name, 'category': category,};
   }
 }
 
