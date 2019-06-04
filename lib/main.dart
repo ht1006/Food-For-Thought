@@ -60,6 +60,7 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   int _selectedIndex = 0;
+  final List<String> _appBar = ['Ingredients', 'My Recipes', 'Save the Planet'];
 
   //Store different pages. Index 0 is Ingredients page, 1 is My Recipes, 3 is FAQ
   final List<Widget> _children = [
@@ -77,7 +78,7 @@ class _HomeState extends State<Home> {
       style: TextStyle(fontSize: 30),
     )),
     Center(child: Text(
-      'Wassup I\'m FAQ page',
+      'Wassup I\'m a Save the Planet page',
       style: TextStyle(fontSize: 30),
     )),
 
@@ -89,7 +90,7 @@ class _HomeState extends State<Home> {
     return Scaffold(
       appBar: AppBar(
         //leading: Icon(Icons.menu),
-        title: Text('Ingredients', style: new TextStyle(fontSize: 25.0)),
+        title: Text(_appBar[_selectedIndex], style: new TextStyle(fontSize: 25.0)),
         backgroundColor: Colors.teal,
         actions: <Widget>[
           IconButton(
@@ -115,8 +116,8 @@ class _HomeState extends State<Home> {
             title: new Text('My Recipes'),
           ),
           BottomNavigationBarItem(
-              icon: Icon(Icons.help),
-              title: Text('FAQ')
+              icon: Icon(Icons.lightbulb_outline),
+              title: Text('Save the Planet')
           )
         ],
         currentIndex: _selectedIndex,
@@ -151,7 +152,7 @@ class _HomeState extends State<Home> {
 //search bar in the home page
 class SearchBar extends StatefulWidget {
   SearchBar() : super();
-
+  List<OwnedIngredient> stored;
   @override
   _SearchBarState createState() => _SearchBarState();
 
@@ -161,21 +162,35 @@ class _SearchBarState extends State<SearchBar> {
   AutoCompleteTextField searchTextField;
   GlobalKey<AutoCompleteTextFieldState<OwnedIngredient>> key = new GlobalKey();
 
-  //Example OwnedIngredient
-  List<OwnedIngredient> stored = [];
-  bool loading = false;
-
-  static List<OwnedIngredient> loadIngredients(String info) {
-    List<OwnedIngredient> stored = [OwnedIngredient(ingredient: "apple", category: "Fruit"),
-    OwnedIngredient(ingredient: "banana", category: "Fruit"), OwnedIngredient(ingredient: "bananananana", category: "Fruit")
-    ];
-    return stored;
-  }
-
   @override
   void initState() {
-    //get OwnedIngredient here?
     super.initState();
+    getOwnedIngredientsPair();
+  }
+
+  void getOwnedIngredientsPair() async {
+    List<OwnedIngredient> list = [];
+    print("In getOwnedIngredientsPair");
+    categories.forEach((cat) async {
+      List ingredients = await getOwnedIngredientList(db, cat);
+      ingredients.forEach((ingr) {
+        list.add(OwnedIngredient(ingredient: ingr, category: cat));
+      });
+    });
+    print("list" + list.length.toString());
+    widget.stored = list;
+//    print("In owned");
+//    List ingredients = await getAllOwnedIngredients(db);
+//    print("MylengthHIIIII: " + ingredients.length.toString());
+//    List categories = await getAllOwnedIngredientsCategories(db);
+//    print("Mylengt2hHIIIII: " + categories.length.toString());
+//
+//    List res;
+//    for (var i = 0; i < ingredients.length; i++) {
+//      res.add(OwnedIngredient(ingredient: ingredients[i], category: categories[i]));
+//    }
+//    print(res);
+//    widget.stored = res;
   }
 
   //a row of autoComplete
@@ -199,23 +214,30 @@ class _SearchBarState extends State<SearchBar> {
 
   @override
   Widget build(BuildContext context) {
+    getOwnedIngredientsPair();
+    print(widget.stored);
 
     return new Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: <Widget>[
-        loading
-            //? null
-            ? CircularProgressIndicator()
-            : searchTextField = AutoCompleteTextField<OwnedIngredient>(
+          Padding(padding: EdgeInsets.symmetric(vertical: 5.0)),
+          searchTextField = AutoCompleteTextField<OwnedIngredient>(
           key: key,
           clearOnSubmit: false,
-          suggestions: stored,
+          suggestions: widget.stored,
           style: TextStyle(color: Colors.black, fontSize: 16.0),
-          decoration: InputDecoration(
-            contentPadding: EdgeInsets.fromLTRB(10.0, 30.0, 10.0, 20.0),
-            hintText: "Search For Ingredient",
-            hintStyle: TextStyle(color: Colors.black),
-          ),
+            decoration: InputDecoration(
+              prefixIcon: Icon(Icons.search, color: Colors.teal),
+              enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.teal),
+                  borderRadius: BorderRadius.all(Radius.circular(25.0))),
+              focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.teal),
+                  borderRadius: BorderRadius.all(Radius.circular(25.0))),
+              contentPadding: EdgeInsets.all(20.0),
+              hintText: "Search For Ingredient",
+              hintStyle: TextStyle(color: Colors.black),
+            ),
           itemFilter: (item, query) {
             return item.ingredient
                 .toLowerCase()
@@ -298,6 +320,12 @@ class _ExpandableListViewState extends State<ExpandableListView> {
                     children: <Widget>[
                       new Expanded(child: new ListTile(
                       title: new Text(widget.ingredientsList[index]),)),
+                      new FlatButton(
+                          onPressed: () {},
+                          shape: StadiumBorder(),
+                          color: Colors.amber,
+                          textColor:Colors.white,
+                          child: Text("Expires in  days")),
                       new IconButton(icon: new Icon(Icons.delete), onPressed: () {
                         removeOwnedIngredient(db, widget.ingredientsList[index]);
                         updateIngredientsList(categories[widget.index]);
@@ -629,6 +657,17 @@ class IngredientUsed extends StatelessWidget {
     return Text('$quantity' + ' ' + unit + ' ' + ingredientName);
   }
 
+}
+
+class OwnedIngredient {
+  final String ingredient;
+  final String category;
+
+  OwnedIngredient({Key key, this.ingredient, this.category});
+
+  Map<String, dynamic> toMap() {
+    return {'ingredient': ingredient, 'category': category,};
+  }
 }
 
 

@@ -26,8 +26,15 @@ Future<List> getOwnedIngredientList(Database db, String category) async {
 
 // Retrieves list of owned ingredients from the given category
 Future<List> getAllOwnedIngredients(Database db) async {
-  List<Map> result = await db.query('owned');
+  List<Map> result = await db.query("owned");
+  print("done retrieving");
   return mapToList(result, 'ingredient');
+}
+
+// Retrieves list of owned ingredients from the given category
+Future<List> getAllOwnedIngredientsCategories(Database db) async {
+  List<Map> result = await db.query('owned');
+  return mapToList(result, 'category');
 }
 
 // Gets a list of all ingredients appearing in the database
@@ -68,13 +75,4 @@ List mapToList(List<Map> records, String key) {
   return list;
 }
 
-class OwnedIngredient {
-  final String ingredient;
-  final String category;
 
-  OwnedIngredient({this.ingredient, this.category});
-
-  Map<String, dynamic> toMap() {
-    return {'ingredient': ingredient, 'category': category,};
-  }
-}
