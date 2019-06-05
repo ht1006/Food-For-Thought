@@ -312,10 +312,6 @@ class _ExpandableListViewState extends State<ExpandableListView> {
             physics: const NeverScrollableScrollPhysics(),
             itemBuilder: (BuildContext context, int index) {
               OwnedIngredient element = widget.ingredientsList[index];
-              int daysLeft = element.getDifferenceInDays();
-              Color expirationColour = (daysLeft < 0) ? Colors.teal :
-              (daysLeft > 7) ? Colors.green :
-              (daysLeft > 2) ? Colors.amber : Colors.red;
               return Slidable(
                 direction: Axis.horizontal,
                 actionPane: SlidableScrollActionPane(),
@@ -328,7 +324,7 @@ class _ExpandableListViewState extends State<ExpandableListView> {
                       new FlatButton(
                           onPressed: () {},
                           shape: StadiumBorder(),
-                          color: expirationColour,
+                          color: element.getExpirationColour(),
                           textColor:Colors.white,
                           child: Text(element.getExpirationText()
                           )),
@@ -428,7 +424,9 @@ class _ExpandableListViewState extends State<ExpandableListView> {
     if (newIngredient.isEmpty) return;
 
     getAllOwnedIngredientsList().then((ownedList) {
-      if (ownedList.contains(newIngredient)) return;
+      if (ownedList.contains(newIngredient) || !isValidIngredient(newIngredient))
+        return;
+
       if (!isSwitched) {
         addOwnedIngredient(categories[widget.index], newIngredient).whenComplete(() =>
             updateIngredientsList(categories[widget.index]));
@@ -440,6 +438,20 @@ class _ExpandableListViewState extends State<ExpandableListView> {
       }
     });
   }
+
+
+  bool isValidIngredient(String newIngredient) {
+    bool isValid = ingredientListToStringList().contains(newIngredient);
+    if (isValid) _showSnackBar(context, 'Invalid ingredient!');
+    return isValid;
+  }
+
+  List<String> ingredientListToStringList() {
+    List<String> list = [];
+    allIngredients.forEach((ingr) => list.add(ingr.name));
+    return list;
+  }
+
 }
 
 class AddIngredient extends StatefulWidget {
@@ -828,7 +840,7 @@ class OwnedIngredient {
 
   int getDifferenceInDays() {
     return (expires == null) ? -1 :
-              expires.difference(DateTime.now()).inDays;
+              expires.difference(DateTime.now()).inDays + 1;
   }
 
   factory OwnedIngredient.fromMap(Map row) {
@@ -841,10 +853,26 @@ class OwnedIngredient {
     );
   }
 
-  String getExpirationText() {
-    return (expires == null) ? "No expiration date set" :
-                  "Expires in " + getDifferenceInDays().toString() + " days";
+  bool hasExpired() {
+    return (expires == null) ? false : expires.isBefore(DateTime.now());
   }
+
+  Color getExpirationColour() {
+    int daysLeft = getDifferenceInDays();
+    return (hasExpired()) ? Colors.black45 :
+    (daysLeft < 0) ? Colors.teal :
+    (daysLeft > 7) ? Colors.green :
+    (daysLeft > 2) ? Colors.amber : Colors.red;
+  }
+
+
+  String getExpirationText() {
+    int difference = getDifferenceInDays();
+    return (expires == null) ? "No expiration date" :
+    (hasExpired()) ? "Expired for " + (-difference).toString()+ " days"
+        : "Expires in " + difference.toString() + " days";
+  }
+
 }
 
 class SaveThePlanetPage extends StatelessWidget {
@@ -910,9 +938,12 @@ class SaveThePlanetPage extends StatelessWidget {
           decoration: new BoxDecoration(borderRadius: BorderRadius.circular(20.0), color: Color(0xfff5ded2)),
           child: new Column(
               children: <Widget>[
-                Padding(padding: const EdgeInsets.fromLTRB(12, 25, 12, 12), child: Text(tipTitle[index], style: TextStyle(fontWeight: FontWeight.bold, fontSize: 25.0), textAlign: TextAlign.center,)),
+                Padding(padding: const EdgeInsets.fromLTRB(12, 25, 12, 12),
+                    child: Text(tipTitle[index], style: TextStyle(fontWeight:
+                    FontWeight.bold, fontSize: MediaQuery.of(context).size
+                        .height * 0.035), textAlign: TextAlign.center,)),
                 Padding(padding: const EdgeInsets.all(8.0), child:Image(image: NetworkImage(images[index]), fit: BoxFit.contain)),
-                Padding(padding: const EdgeInsets.fromLTRB(20, 12, 12, 12),child: Text(tip[index], style: TextStyle(fontSize: 22.0)))]
+                Padding(padding: const EdgeInsets.fromLTRB(20, 12, 12, 12), child: Text(tip[index], style: TextStyle(fontSize: MediaQuery.of(context).size.height * 0.025)))]
           ),
         );
       },
@@ -922,4 +953,9 @@ class SaveThePlanetPage extends StatelessWidget {
   }
 
 }
+
+void _showSnackBar(BuildContext context, String text) {
+  Scaffold.of(context).showSnackBar(SnackBar(content: Text(text)));
+}
+
 

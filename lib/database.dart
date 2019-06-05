@@ -124,9 +124,12 @@ class Ingredient {
   Ingredient({this.name, this.expires});
 
   factory Ingredient.decodeJson(Map<String, dynamic> json) {
+    int duration = int.parse(json['duration']);
+    DateTime date = (duration == 0) ? null :
+                    DateTime.now().add(Duration(days: duration));
     return Ingredient(
       name: json['name'],
-      expires: DateTime.now().add(Duration(days: int.parse(json['duration']))),
+      expires: date,
     );
   }
 }
