@@ -20,7 +20,7 @@ Future<Database> openAppDatabase() async {
 
   return await openDatabase(path, version: 1, onCreate: (db, version) {
     return db.execute('CREATE TABLE owned(name TEXT NOT NULL, '
-        'category TEXT NOT NULL, expire DATE)');
+        'category TEXT NOT NULL, expire TEXT)');
   });
 }
 
@@ -30,16 +30,27 @@ Future addOwnedIngredient(String category, String ingredient) async {
       OwnedIngredient(name: ingredient, category: category).toMap());
 }
 
+Future addOwnedIngredientWithExpiry(String category, String ingredient,
+    DateTime expires) async {
+  await db.insert('owned',
+      OwnedIngredient(name: ingredient, category: category, expires: expires)
+          .toMap());
+}
+
 // Removes an ingredient to the 'owned' table
 Future removeOwnedIngredient(String ingredient) async {
   await db.delete('owned', where: '"name" = ?', whereArgs: [ingredient]);
 }
 
 // Retrieves list of owned ingredients from the given category
-Future<List> getOwnedIngredientList(String category) async {
+Future<List<OwnedIngredient>> getOwnedIngredientList(String category) async {
   List<Map> result = await db.query('owned', where: '"category" = ?',
       whereArgs: [category], distinct: true);
-  return mapToList(result, 'name');
+  List<OwnedIngredient> owned = [];
+  result.forEach((ingredient) {
+    owned.add(OwnedIngredient.fromMap(ingredient));
+  });
+  return owned;
 }
 
 Future<List<OwnedIngredient>> getAllOwnedIngredients() async {
@@ -50,25 +61,32 @@ Future<List<OwnedIngredient>> getAllOwnedIngredients() async {
   return list;
 }
 
-Future<List> getAllOwnedIngredientsList() async {
+
+// Gets a list of all ingredients appearing in the database
+Future<List<Ingredient>> getAllIngredientsList() async {
+  http.Response resp = await http.get('https://fft-group3.herokuapp.com/?req=list');
+  if (resp.statusCode == 200) {
+    List jsonObj = json.decode(resp.body);
+    List<Ingredient> allIngredients = [];
+    jsonObj.forEach((obj) {
+      allIngredients.add(Ingredient.decodeJson(obj));
+    });
+    return allIngredients;
+  }
+  throw Exception('Failed to load post');
+}
+
+// Gets all the ingredients owned
+Future<List<String>> getAllOwnedIngredientsList() async {
   List<Map> result = await db.query('owned');
   List<String> list = [];
   result.forEach((ingr) => list.add(ingr['name']));
   return list;
 }
 
-// Gets a list of all ingredients appearing in the database
-Future<List> getAllIngredientsList() async {
-  http.Response resp = await http.get('https://fft-group3.herokuapp.com/?req=list');
-  if (resp.statusCode == 200) {
-    return json.decode(resp.body);
-  }
-  throw Exception('Failed to load post');
-}
-
 // Gets recipes based on owned ingredients and decodes from json format
-Future<List<Recipe>> fetchRecipes(List<String> ownedIngredients) async {
-  String jsonOwned = json.encode(ownedIngredients);
+Future<List<Recipe>> fetchRecipes() async {
+  String jsonOwned = json.encode(getAllOwnedIngredientsList);
   var param = {
     'req': 'recipe',
     'owned' : jsonOwned
@@ -96,5 +114,20 @@ List mapToList(List<Map> records, String key) {
   });
   return list;
 }
+
+class Ingredient {
+  final String name;
+  final DateTime expires;
+
+  Ingredient({this.name, this.expires});
+
+  factory Ingredient.decodeJson(Map<String, dynamic> json) {
+    return Ingredient(
+      name: json['name'],
+      expires: DateTime.now().add(Duration(days: int.parse(json['duration']))),
+    );
+  }
+}
+
 
 

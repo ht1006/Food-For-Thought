@@ -5,16 +5,13 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'database.dart';
 import 'package:autocomplete_textfield/autocomplete_textfield.dart';
 
-//example database
-final List<String> categories
-= <String>['Fruit', 'Vegetables', 'Dairy', 'Meat', 'Spices'];
-List<String> menuChoices = <String>['Ingredients','My Recipes','Save the Planet'
-  ,'FAQ','About'];
-List<IconData> menuIcons = <IconData>[Icons.kitchen, Icons.favorite,
-  Icons.lightbulb_outline, Icons.help, Icons.info_outline];
-final List<IconData> icons
-= <IconData>[FontAwesomeIcons.appleAlt, FontAwesomeIcons.carrot, FontAwesomeIcons.cheese
-  , FontAwesomeIcons.drumstickBite, FontAwesomeIcons.pepperHot];
+//Useful lists
+final List<String> categories = <String>['Fruit', 'Vegetables', 'Dairy', 'Meat', 'Spices', 'Others'];
+final List<String> menuChoices = <String>['Ingredients','My Recipes','Save the Planet','FAQ','About'];
+final List<IconData> menuIcons = <IconData>[Icons.kitchen, Icons.favorite, Icons.lightbulb_outline, Icons.help, Icons.info_outline];
+final List<IconData> icons = <IconData>[FontAwesomeIcons.appleAlt,
+  FontAwesomeIcons.carrot, FontAwesomeIcons.cheese, FontAwesomeIcons.drumstickBite, FontAwesomeIcons.pepperHot, FontAwesomeIcons.pizzaSlice];
+List<Ingredient> allIngredients = [];
 
 //main page
 void main() => runApp(MyApp());
@@ -64,13 +61,16 @@ class _HomeState extends State<Home> {
 
   ];
 
+
+
   @override
   Widget build(BuildContext context) {
+    openAppDatabase().then((result) => db = result);
     return FutureBuilder(
-      future: openAppDatabase(),
+      future: getAllIngredientsList(),
       builder: (BuildContext context, AsyncSnapshot snapshot) {
         if (snapshot.hasData) {
-          db = snapshot.data;
+          allIngredients = snapshot.data;
           return new Scaffold(
             appBar: AppBar(
               //leading: Icon(Icons.menu),
@@ -246,7 +246,7 @@ class _SearchBarState extends State<SearchBar> {
 //Ingredient dropdown
 class ExpandableListView extends StatefulWidget {
   final int index;
-  List ingredientsList = [];
+  List<OwnedIngredient> ingredientsList = [];
 
   ExpandableListView({Key key, this.index}) : super(key: key);
 
@@ -259,8 +259,13 @@ class _ExpandableListViewState extends State<ExpandableListView> {
   bool expandFlag = false;
 
   @override
-  Widget build(BuildContext context) {
+  void initState() {
+    super.initState();
     updateIngredientsList(categories[widget.index]);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return new Container(
       margin: const EdgeInsets.only(left: 10.0),
       padding: const EdgeInsets.all(15.0),
@@ -304,13 +309,14 @@ class _ExpandableListViewState extends State<ExpandableListView> {
                   child: new Row(
                     children: <Widget>[
                       new Expanded(child: new ListTile(
-                      title: new Text(widget.ingredientsList[index]),)),
+                      title: new Text(widget.ingredientsList[index].name),)),
                       new FlatButton(
                           onPressed: () {},
                           shape: StadiumBorder(),
                           color: Colors.amber,
                           textColor:Colors.white,
-                          child: Text("Expires in  days")),
+                          child: Text(widget.ingredientsList[index].getExpirationText()
+                          )),
                       new Padding(padding: EdgeInsets.fromLTRB(0, 0, 10, 0))
                     ],
                   )
@@ -321,7 +327,7 @@ class _ExpandableListViewState extends State<ExpandableListView> {
                     color: Colors.red,
                     icon: Icons.delete,
                     onTap: () {
-                      removeOwnedIngredient(widget.ingredientsList[index]);
+                      removeOwnedIngredient(widget.ingredientsList[index].name);
                       updateIngredientsList(categories[widget.index]);
                     },
                   ),
@@ -351,21 +357,39 @@ class _ExpandableListViewState extends State<ExpandableListView> {
     );
   }
 
-  Future updateIngredientsList(String foodType) async {
-    List newIngredients = await getFoodTypeList(foodType);
-    setState(() {
-      widget.ingredientsList = newIngredients;
+  updateIngredientsList(String foodType) {
+    getOwnedIngredientList(foodType).then((result) {
+      setState(() {
+        widget.ingredientsList = result;
+        widget.ingredientsList.sort((a, b) =>
+        (a == null) ? -1 :
+        (b == null) ? 1 :
+            a.expires.compareTo(b.expires));
+      });
     });
   }
 
   Future<String> _asyncAddIngrDialog(BuildContext context) async {
     String newIngredient = '';
-    Future<DateTime> expiryDate;
+    DateTime expiryDate;
     bool isSwitched = false;
 
-    callback(value) {
+    callbackString(name) {
       setState(() {
-        newIngredient = value;
+        newIngredient = name;
+      });
+    }
+
+    callbackDate(date) {
+      print(date.toString());
+      setState(() {
+        expiryDate = date;
+      });
+    }
+
+    callbackSwitch(value) {
+      setState(() {
+        isSwitched = value;
       });
     }
 
@@ -378,8 +402,8 @@ class _ExpandableListViewState extends State<ExpandableListView> {
           content: new Container(
             height: 150.0,
             width: 400.0,
-            child: AddIngredient(newIngredient, isSwitched,
-                expiryDate, callback)
+            child: AddIngredient(newIngredient, isSwitched, expiryDate,
+                callbackString, callbackDate, callbackSwitch)
           ),
 
           actions: <Widget>[
@@ -391,7 +415,12 @@ class _ExpandableListViewState extends State<ExpandableListView> {
                 Navigator.of(context).pop(newIngredient);
                 if (newIngredient.isNotEmpty
                     && !widget.ingredientsList.contains(newIngredient)) {
-                  addOwnedIngredient(categories[widget.index], newIngredient);
+                  if (!isSwitched) {
+                    addOwnedIngredient(categories[widget.index], newIngredient);
+                  } else {
+                    addOwnedIngredientWithExpiry(categories[widget.index],
+                        newIngredient, expiryDate);
+                  }
                   updateIngredientsList(categories[widget.index]);
                 }
 
@@ -407,11 +436,14 @@ class _ExpandableListViewState extends State<ExpandableListView> {
 class AddIngredient extends StatefulWidget {
 
   String newIngredient;
-  Future<DateTime> expiryDate;
+  DateTime expiryDate;
   bool isSwitched;
-  Function(String) callback;
+  Function(String) callbackString;
+  Function(DateTime) callbackDate;
+  Function(bool) callbackSwitch;
 
-  AddIngredient(this.newIngredient, this.isSwitched, this.expiryDate, this.callback);
+  AddIngredient(this.newIngredient, this.isSwitched, this.expiryDate, this
+      .callbackString, this.callbackDate, this.callbackSwitch);
 
   @override
   _AddIngredientState createState() => new _AddIngredientState();
@@ -419,23 +451,14 @@ class AddIngredient extends StatefulWidget {
 
 class _AddIngredientState extends State<AddIngredient> {
   AutoCompleteTextField searchTextField;
-  GlobalKey<AutoCompleteTextFieldState> key = new GlobalKey();
-  List allIngredients = [];
+  GlobalKey<AutoCompleteTextFieldState<Ingredient>> key = new GlobalKey();
 
-  @override
-  void initState() {
-    super.initState();
-    getAllIngredientsList().then((result) => setState(() {
-      allIngredients = result;
-    }));
-  }
-
-  Widget storedRow(String name) {
+  Widget storedRow(Ingredient item) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: <Widget>[
         Text(
-          name,
+          item.name,
           style: TextStyle(fontSize: 20.0),
         ),
       ],
@@ -445,80 +468,146 @@ class _AddIngredientState extends State<AddIngredient> {
   @override
   Widget build(BuildContext context) {
     return Column(
-      children: <Widget>[
-//        new TextField(
-//          autofocus: true,
-//          decoration: new InputDecoration(hintText: 'Enter Ingredient'),
-//          onChanged: (value) {
-//            widget.callback(value);
-//          },
-//        ),
-        searchTextField = AutoCompleteTextField(
-          key: key,
-          clearOnSubmit: false,
-          suggestions: allIngredients,
-          textChanged: (text) => widget.callback(text),
-          style: TextStyle(color: Colors.black, fontSize: 16.0),
-          decoration: InputDecoration(
-            suffixIcon: Icon(Icons.search, color: Colors.black),
-//                enabledBorder: OutlineInputBorder(
-//                    borderSide: BorderSide(color: Colors.teal),
-//                    borderRadius: BorderRadius.all(Radius.circular(25.0))),
-//                focusedBorder: OutlineInputBorder(
-//                    borderSide: BorderSide(color: Colors.teal),
-//                    borderRadius: BorderRadius.all(Radius.circular(25.0))),
-//                contentPadding: EdgeInsets.all(20.0),
-            hintText: "Enter Ingredient",
-            hintStyle: TextStyle(color: Colors.black),
-          ),
-          itemFilter: (item, query) {
-            return item.toLowerCase()
-                .contains(query.toLowerCase());
-          },
-          itemSorter: (a, b) {
-            return a.compareTo(b);
-          },
-          itemSubmitted: (item) {
-            setState(() {
-              searchTextField.textField.controller.text = item;
-            });
-          },
-          itemBuilder: (context, item) {
-            // ui for the autocompelete row
-            return storedRow(item);
-          },
-        ),
-
-        Padding(padding: const EdgeInsets.all(10.0)),
-        new Row(
           children: <Widget>[
-            Switch(
-              value: widget.isSwitched,
-              onChanged: (val) {
+            searchTextField = AutoCompleteTextField<Ingredient>(
+              key: key,
+              clearOnSubmit: false,
+              suggestions: allIngredients,
+              textChanged: (text) => widget.callbackString(text),
+              style: TextStyle(color: Colors.black, fontSize: 16.0),
+              decoration: InputDecoration(
+                suffixIcon: Icon(Icons.search, color: Colors.black),
+                hintText: "Enter Ingredient",
+                hintStyle: TextStyle(color: Colors.black),
+              ),
+              itemFilter: (item, query) {
+                return item.name.toLowerCase()
+                    .contains(query.toLowerCase());
+              },
+              itemSorter: (a, b) {
+                return a.name.compareTo(b.name);
+              },
+              itemSubmitted: (item) {
                 setState(() {
-                  widget.isSwitched = val;
+                  widget.callbackString(item.name);
+                  widget.callbackDate(item.expires);
+                  searchTextField.textField.controller.text = item.name;
                 });
               },
-              activeTrackColor: Colors.teal,
-              activeColor: Colors.teal,
-            ),
-            Padding(padding: const EdgeInsets.all(10.0)),
-            new RaisedButton(onPressed: !widget.isSwitched ? null : () { widget.expiryDate = showDatePicker(
-              context: context,
-              initialDate: DateTime.now(),
-              firstDate: DateTime(2019),
-              lastDate: DateTime(2030),
-              builder: (BuildContext context, Widget child) {
-                return Theme(
-                  data: ThemeData(primaryColor: Colors.teal, accentColor: Colors.teal),
-                  child: child,
-                );
+              itemBuilder: (context, item) {
+                // ui for the autocompelete row
+                return storedRow(item);
               },
-            );}, child: Text('Add Expiry Date'))
+            ),
+
+            Padding(padding: const EdgeInsets.all(10.0)),
+            new Row(
+              children: <Widget>[
+                Switch(
+                  value: widget.isSwitched,
+                  onChanged: (val) {
+                    setState(() {
+                      widget.isSwitched = val;
+                      widget.callbackSwitch(val);
+                    });
+                  },
+                  activeTrackColor: Colors.teal,
+                  activeColor: Colors.teal,
+                ),
+                Padding(padding: const EdgeInsets.all(10.0)),
+                new RaisedButton(
+                  child: Text('Add Expiry Date'),
+                  onPressed: !widget.isSwitched ? null : ()
+                  { showDatePicker(
+                      context: context,
+                      initialDate: DateTime.now(),
+                      firstDate: DateTime(2019),
+                      lastDate: DateTime(2030),
+                      builder: (BuildContext context, Widget child) {
+                        return Theme(
+                          data: ThemeData(primaryColor: Colors.teal, accentColor: Colors.teal),
+                          child: child,
+                        );
+                      },
+                    ).then((date) => widget.callbackDate(date));
+                  }
+                )
+              ],
+            )
           ],
-        )
-      ],
-    );
+        );
+//    return FutureBuilder(
+//      future: getAllIngredientsList(),
+//      builder: (BuildContext context, AsyncSnapshot snapshot) {
+//        return snapshot.hasData? Column(
+//          children: <Widget>[
+//            searchTextField = AutoCompleteTextField<Ingredient>(
+//              key: key,
+//              clearOnSubmit: false,
+//              suggestions: snapshot.data,
+//              textChanged: (text) => widget.callback(text),
+//              style: TextStyle(color: Colors.black, fontSize: 16.0),
+//              decoration: InputDecoration(
+//                suffixIcon: Icon(Icons.search, color: Colors.black),
+//                hintText: "Enter Ingredient",
+//                hintStyle: TextStyle(color: Colors.black),
+//              ),
+//              itemFilter: (item, query) {
+//                return item.name.toLowerCase()
+//                    .contains(query.toLowerCase());
+//              },
+//              itemSorter: (a, b) {
+//                return a.name.compareTo(b.name);
+//              },
+//              itemSubmitted: (item) {
+//                setState(() {
+//                  widget.callback(item.name);
+//                  searchTextField.textField.controller.text = item.name;
+//                });
+//              },
+//              itemBuilder: (context, item) {
+//                // ui for the autocompelete row
+//                return storedRow(item);
+//              },
+//            ),
+//
+//            Padding(padding: const EdgeInsets.all(10.0)),
+//            new Row(
+//              children: <Widget>[
+//                Switch(
+//                  value: widget.isSwitched,
+//                  onChanged: (val) {
+//                    setState(() {
+//                      widget.isSwitched = val;
+//                    });
+//                  },
+//                  activeTrackColor: Colors.teal,
+//                  activeColor: Colors.teal,
+//                ),
+//                Padding(padding: const EdgeInsets.all(10.0)),
+//                new RaisedButton(
+//                  child: Text('Add Expiry Date'),
+//                  onPressed: !widget.isSwitched ? null : ()
+//                  { widget.expiryDate = showDatePicker(
+//                      context: context,
+//                      initialDate: DateTime.now(),
+//                      firstDate: DateTime(2019),
+//                      lastDate: DateTime(2030),
+//                      builder: (BuildContext context, Widget child) {
+//                        return Theme(
+//                          data: ThemeData(primaryColor: Colors.teal, accentColor: Colors.teal),
+//                          child: child,
+//                        );
+//                      },
+//                    );
+//                  }
+//                )
+//              ],
+//            )
+//          ],
+//        ) : new Column();
+//      },
+//    );
   }
 }
 
@@ -551,11 +640,6 @@ class ExpandableContainer extends StatelessWidget {
   }
 }
 
-//Return the corresponding specific ingredient list according to the foodType
-Future<List> getFoodTypeList(String foodType) {
-  return getOwnedIngredientList(foodType);
-}
-
 class RecipeGen extends StatefulWidget {
   List<Recipe> recipesGenerated= [];
 
@@ -568,11 +652,9 @@ class _RecipeGenState extends State<RecipeGen> {
   @override
   void initState() {
     super.initState();
-    getAllOwnedIngredientsList().then((ownedIngredients) {
-      fetchRecipes(ownedIngredients).then((recipes) {
-        setState(() {
-          widget.recipesGenerated = recipes;
-        });
+    fetchRecipes().then((recipes) {
+      setState(() {
+        widget.recipesGenerated = recipes;
       });
     });
   }
@@ -796,11 +878,31 @@ class IngredientUsed extends StatelessWidget {
 class OwnedIngredient {
   String name;
   String category;
+  DateTime expires;
 
-  OwnedIngredient({Key key, this.name, this.category});
+  OwnedIngredient({Key key, this.name, this.category, this.expires});
 
   Map<String, dynamic> toMap() {
-    return {'name': name, 'category': category,};
+    return {'name': name, 'category': category, 'expire': expires.toString()};
+  }
+
+  String getDifferenceInDays() {
+    return expires.difference(DateTime.now()).inDays.toString();
+  }
+
+  factory OwnedIngredient.fromMap(Map row) {
+    DateTime date = ('null'.contains(row['expire'])) ?
+                    null : DateTime.parse(row['expire']);
+    return OwnedIngredient(
+      name: row['name'],
+      category: row['category'],
+      expires: date,
+    );
+  }
+
+  String getExpirationText() {
+    return (expires == null) ? "No expiration date set" :
+                  "Expires in " + getDifferenceInDays() + " days";
   }
 }
 
