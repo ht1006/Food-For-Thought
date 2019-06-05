@@ -227,6 +227,7 @@ class _SearchBarState extends State<SearchBar> {
               },
               itemSubmitted: (item) {
                 setState(() {
+                  searchTextField.clear();
                   searchTextField.textField.controller.text = item.name;
                 });
               },
@@ -301,6 +302,11 @@ class _ExpandableListViewState extends State<ExpandableListView> {
             child: new ListView.builder(
             physics: const NeverScrollableScrollPhysics(),
             itemBuilder: (BuildContext context, int index) {
+              OwnedIngredient element = widget.ingredientsList[index];
+              int daysLeft = element.getDifferenceInDays();
+              Color expirationColour = (daysLeft < 0) ? Colors.teal :
+              (daysLeft > 7) ? Colors.green :
+              (daysLeft > 2) ? Colors.amber : Colors.red;
               return Slidable(
                 direction: Axis.horizontal,
                 actionPane: SlidableScrollActionPane(),
@@ -309,13 +315,13 @@ class _ExpandableListViewState extends State<ExpandableListView> {
                   child: new Row(
                     children: <Widget>[
                       new Expanded(child: new ListTile(
-                      title: new Text(widget.ingredientsList[index].name),)),
+                      title: new Text(element.name),)),
                       new FlatButton(
                           onPressed: () {},
                           shape: StadiumBorder(),
-                          color: Colors.amber,
+                          color: expirationColour,
                           textColor:Colors.white,
-                          child: Text(widget.ingredientsList[index].getExpirationText()
+                          child: Text(element.getExpirationText()
                           )),
                       new Padding(padding: EdgeInsets.fromLTRB(0, 0, 10, 0))
                     ],
@@ -500,6 +506,7 @@ class _AddIngredientState extends State<AddIngredient> {
                 setState(() {
                   widget.callbackString(item.name);
                   widget.callbackDate(item.expires);
+                  searchTextField.clear();
                   searchTextField.textField.controller.text = item.name;
                 });
               },
@@ -545,78 +552,6 @@ class _AddIngredientState extends State<AddIngredient> {
             )
           ],
         );
-//    return FutureBuilder(
-//      future: getAllIngredientsList(),
-//      builder: (BuildContext context, AsyncSnapshot snapshot) {
-//        return snapshot.hasData? Column(
-//          children: <Widget>[
-//            searchTextField = AutoCompleteTextField<Ingredient>(
-//              key: key,
-//              clearOnSubmit: false,
-//              suggestions: snapshot.data,
-//              textChanged: (text) => widget.callback(text),
-//              style: TextStyle(color: Colors.black, fontSize: 16.0),
-//              decoration: InputDecoration(
-//                suffixIcon: Icon(Icons.search, color: Colors.black),
-//                hintText: "Enter Ingredient",
-//                hintStyle: TextStyle(color: Colors.black),
-//              ),
-//              itemFilter: (item, query) {
-//                return item.name.toLowerCase()
-//                    .contains(query.toLowerCase());
-//              },
-//              itemSorter: (a, b) {
-//                return a.name.compareTo(b.name);
-//              },
-//              itemSubmitted: (item) {
-//                setState(() {
-//                  widget.callback(item.name);
-//                  searchTextField.textField.controller.text = item.name;
-//                });
-//              },
-//              itemBuilder: (context, item) {
-//                // ui for the autocompelete row
-//                return storedRow(item);
-//              },
-//            ),
-//
-//            Padding(padding: const EdgeInsets.all(10.0)),
-//            new Row(
-//              children: <Widget>[
-//                Switch(
-//                  value: widget.isSwitched,
-//                  onChanged: (val) {
-//                    setState(() {
-//                      widget.isSwitched = val;
-//                    });
-//                  },
-//                  activeTrackColor: Colors.teal,
-//                  activeColor: Colors.teal,
-//                ),
-//                Padding(padding: const EdgeInsets.all(10.0)),
-//                new RaisedButton(
-//                  child: Text('Add Expiry Date'),
-//                  onPressed: !widget.isSwitched ? null : ()
-//                  { widget.expiryDate = showDatePicker(
-//                      context: context,
-//                      initialDate: DateTime.now(),
-//                      firstDate: DateTime(2019),
-//                      lastDate: DateTime(2030),
-//                      builder: (BuildContext context, Widget child) {
-//                        return Theme(
-//                          data: ThemeData(primaryColor: Colors.teal, accentColor: Colors.teal),
-//                          child: child,
-//                        );
-//                      },
-//                    );
-//                  }
-//                )
-//              ],
-//            )
-//          ],
-//        ) : new Column();
-//      },
-//    );
   }
 }
 
@@ -897,8 +832,9 @@ class OwnedIngredient {
     return {'name': name, 'category': category, 'expire': expires.toString()};
   }
 
-  String getDifferenceInDays() {
-    return expires.difference(DateTime.now()).inDays.toString();
+  int getDifferenceInDays() {
+    return (expires == null) ? -1 :
+              expires.difference(DateTime.now()).inDays;
   }
 
   factory OwnedIngredient.fromMap(Map row) {
@@ -913,7 +849,7 @@ class OwnedIngredient {
 
   String getExpirationText() {
     return (expires == null) ? "No expiration date set" :
-                  "Expires in " + getDifferenceInDays() + " days";
+                  "Expires in " + getDifferenceInDays().toString() + " days";
   }
 }
 
