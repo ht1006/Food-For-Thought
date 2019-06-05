@@ -5,13 +5,10 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'main.dart';
 import 'package:path/path.dart';
-import 'package:sqflite/sqflite.dart';
 
 Database db;
 
-Future openAppDatabase() async {
-  if (db != null) return;
-
+Future<Database> openAppDatabase() async {
   var databasesPath = await getDatabasesPath();
   var path = join(databasesPath, 'app.db');
 
@@ -21,7 +18,7 @@ Future openAppDatabase() async {
     } catch (_) {}
   }
 
-  db = await openDatabase(path, version: 1, onCreate: (db, version) {
+  return await openDatabase(path, version: 1, onCreate: (db, version) {
     return db.execute('CREATE TABLE owned(name TEXT NOT NULL, '
         'category TEXT NOT NULL, expire DATE)');
   });
@@ -40,7 +37,6 @@ Future removeOwnedIngredient(String ingredient) async {
 
 // Retrieves list of owned ingredients from the given category
 Future<List> getOwnedIngredientList(String category) async {
-  if (db == null) return [];
   List<Map> result = await db.query('owned', where: '"category" = ?',
       whereArgs: [category], distinct: true);
   return mapToList(result, 'name');

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'database.dart';
 import 'package:autocomplete_textfield/autocomplete_textfield.dart';
@@ -63,82 +64,93 @@ class _HomeState extends State<Home> {
 
   ];
 
-  Future<List> loadIngredients() async {
-    return await getAllOwnedIngredients();
-  }
-
   @override
   Widget build(BuildContext context) {
-    openAppDatabase();
-    return Scaffold(
-      appBar: AppBar(
-        //leading: Icon(Icons.menu),
-        title: Text(_appBar[_selectedIndex], style: new TextStyle(fontSize: 25.0)),
-        backgroundColor: Colors.teal,
-        actions: <Widget>[
-          _selectedIndex == 0 ? IconButton(
-            icon: Icon(Icons.search),
-            onPressed: () {
-              setState(() {
-                enableSearch = !enableSearch;
-              });
-            }
-          ) : Container(width: 0, height: 0),
-          IconButton(
-            icon: Icon(Icons.local_dining),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => RecipeGen()),
-              );
-            },
-          ),
-        ],
-      ),
-      body: _selectedIndex == 0 ? new Container(child: new Column(children: <Widget>[
-        enableSearch ? new SearchBar() : new Container(width: 0, height: 0),
-        new Expanded(child: new ListView.builder(
-          itemBuilder: (BuildContext context, int index) {
-            return new ExpandableListView(index: index);
-          },
-          itemCount: categories.length,
-        ),)
-      ],),) :_children[_selectedIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        items: [
-          BottomNavigationBarItem(
-            icon: new Icon(Icons.kitchen),
-            title: new Text('Ingredients'),
-          ),
-          BottomNavigationBarItem(
-            icon: new Icon(Icons.favorite),
-            title: new Text('My Recipes'),
-          ),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.lightbulb_outline),
-              title: Text('Save the Planet')
-          )
-        ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: Colors.teal,
-        onTap: _onItemTapped,
-      ),
-      drawer: new Drawer(
-        child: new ListView.builder(
-              itemBuilder: (BuildContext context, int index) {
-                return new Container(
-                  padding: const EdgeInsets.fromLTRB(0,10.0,0,10.0),
-                  child: new ListTile(
-                    leading: Icon(menuIcons[index]),
-                    title: new Text(
-                      menuChoices[index],style: TextStyle(fontSize: 18)
-                    ),
-                  ),
-                );},
-              itemCount: menuChoices.length,
+    return FutureBuilder(
+      future: openAppDatabase(),
+      builder: (BuildContext context, AsyncSnapshot snapshot) {
+        if (snapshot.hasData) {
+          db = snapshot.data;
+          return new Scaffold(
+            appBar: AppBar(
+              //leading: Icon(Icons.menu),
+              title: Text(_appBar[_selectedIndex], style: new TextStyle(fontSize: 25.0)),
+              backgroundColor: Colors.teal,
+              actions: <Widget>[
+                _selectedIndex == 0 ? IconButton(
+                    icon: Icon(Icons.search),
+                    onPressed: () {
+                      setState(() {
+                        enableSearch = !enableSearch;
+                      });
+                    }
+                ) : Container(width: 0, height: 0),
+                IconButton(
+                  icon: Icon(Icons.local_dining),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => RecipeGen()),
+                    );
+                  },
+                ),
+              ],
             ),
-        ),
+            body: _selectedIndex == 0 ? new Container(child: new Column(children: <Widget>[
+              enableSearch ? new SearchBar() : new Container(width: 0, height: 0),
+              new Expanded(child: new ListView.builder(
+                itemBuilder: (BuildContext context, int index) {
+                  return new ExpandableListView(index: index);
+                },
+                itemCount: categories.length,
+              ),)
+            ],),) :_children[_selectedIndex],
+            bottomNavigationBar: BottomNavigationBar(
+              items: [
+                BottomNavigationBarItem(
+                  icon: new Icon(Icons.kitchen),
+                  title: new Text('Ingredients'),
+                ),
+                BottomNavigationBarItem(
+                  icon: new Icon(Icons.favorite),
+                  title: new Text('My Recipes'),
+                ),
+                BottomNavigationBarItem(
+                    icon: Icon(Icons.lightbulb_outline),
+                    title: Text('Save the Planet')
+                )
+              ],
+              currentIndex: _selectedIndex,
+              selectedItemColor: Colors.teal,
+              onTap: _onItemTapped,
+            ),
+            drawer: new Drawer(
+              child: new ListView.builder(
+                itemBuilder: (BuildContext context, int index) {
+                  return new Container(
+                    padding: const EdgeInsets.fromLTRB(0,10.0,0,10.0),
+                    child: new ListTile(
+                      leading: Icon(menuIcons[index]),
+                      title: new Text(
+                          menuChoices[index],style: TextStyle(fontSize: 18)
+                      ),
+                    ),
+                  );},
+                itemCount: menuChoices.length,
+              ),
+            ),
+          );
+        } else {
+        return new Container(
+              decoration: new BoxDecoration(color: Colors.white),
+              child: new Center(
+                child: new CircularProgressIndicator(backgroundColor: Colors.teal,
+              strokeWidth: 5))
+          );
+        }
+      }
     );
+
   }
 
   void _onItemTapped(int index) {
@@ -150,8 +162,6 @@ class _HomeState extends State<Home> {
 
 //search bar in the home page
 class SearchBar extends StatefulWidget {
-  List<OwnedIngredient> stored = [];
-
   @override
   _SearchBarState createState() => _SearchBarState();
 }
@@ -160,19 +170,8 @@ class _SearchBarState extends State<SearchBar> {
   AutoCompleteTextField searchTextField;
   GlobalKey<AutoCompleteTextFieldState<OwnedIngredient>> key = new GlobalKey();
 
-
-  @override
-  void initState() {
-    getAllOwnedIngredients().then((result) {
-      setState(() {
-        widget.stored = result;
-      });
-    });
-    super.initState();
-  }
-
   //a row of autoComplete
-  //TODO: deorate rows
+  //TODO: decorate rows
   Widget storedRow(OwnedIngredient ownedIngredient) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -221,7 +220,7 @@ class _SearchBarState extends State<SearchBar> {
               itemFilter: (item, query) {
                 return item.name
                     .toLowerCase()
-                    .startsWith(query.toLowerCase());
+                    .contains(query.toLowerCase());
               },
               itemSorter: (a, b) {
                 return a.name.compareTo(b.name);
@@ -297,7 +296,11 @@ class _ExpandableListViewState extends State<ExpandableListView> {
             child: new ListView.builder(
             physics: const NeverScrollableScrollPhysics(),
             itemBuilder: (BuildContext context, int index) {
-              return new Container(
+              return Slidable(
+                direction: Axis.horizontal,
+                actionPane: SlidableScrollActionPane(),
+                actionExtentRatio: 0.2,
+                child: Container(
                   child: new Row(
                     children: <Widget>[
                       new Expanded(child: new ListTile(
@@ -308,12 +311,21 @@ class _ExpandableListViewState extends State<ExpandableListView> {
                           color: Colors.amber,
                           textColor:Colors.white,
                           child: Text("Expires in  days")),
-                      new IconButton(icon: new Icon(Icons.delete), onPressed: () {
-                        removeOwnedIngredient(widget.ingredientsList[index]);
-                        updateIngredientsList(categories[widget.index]);
-                      })
+                      new Padding(padding: EdgeInsets.fromLTRB(0, 0, 10, 0))
                     ],
                   )
+                ),
+                actions: <Widget>[
+                  IconSlideAction(
+                    caption: 'Delete',
+                    color: Colors.red,
+                    icon: Icons.delete,
+                    onTap: () {
+                      removeOwnedIngredient(widget.ingredientsList[index]);
+                      updateIngredientsList(categories[widget.index]);
+                    },
+                  ),
+                ],
               );
             },
               itemCount: widget.ingredientsList.length,
@@ -406,22 +418,77 @@ class AddIngredient extends StatefulWidget {
 }
 
 class _AddIngredientState extends State<AddIngredient> {
+  AutoCompleteTextField searchTextField;
+  GlobalKey<AutoCompleteTextFieldState> key = new GlobalKey();
+  List allIngredients = [];
+
+  @override
+  void initState() {
+    super.initState();
+    getAllIngredientsList().then((result) => setState(() {
+      allIngredients = result;
+    }));
+  }
+
+  Widget storedRow(String name) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: <Widget>[
+        Text(
+          name,
+          style: TextStyle(fontSize: 20.0),
+        ),
+      ],
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    List allIngredients = [];
-    getAllIngredientsList().then((list) {
-      allIngredients = list;
-    });
-    return new Column(
+    return Column(
       children: <Widget>[
-        new TextField(
-          autofocus: true,
-          decoration: new InputDecoration(hintText: 'Enter Ingredient'),
-          onChanged: (value) {
-            widget.callback(value);
+//        new TextField(
+//          autofocus: true,
+//          decoration: new InputDecoration(hintText: 'Enter Ingredient'),
+//          onChanged: (value) {
+//            widget.callback(value);
+//          },
+//        ),
+        searchTextField = AutoCompleteTextField(
+          key: key,
+          clearOnSubmit: false,
+          suggestions: allIngredients,
+          textChanged: (text) => widget.callback(text),
+          style: TextStyle(color: Colors.black, fontSize: 16.0),
+          decoration: InputDecoration(
+            suffixIcon: Icon(Icons.search, color: Colors.black),
+//                enabledBorder: OutlineInputBorder(
+//                    borderSide: BorderSide(color: Colors.teal),
+//                    borderRadius: BorderRadius.all(Radius.circular(25.0))),
+//                focusedBorder: OutlineInputBorder(
+//                    borderSide: BorderSide(color: Colors.teal),
+//                    borderRadius: BorderRadius.all(Radius.circular(25.0))),
+//                contentPadding: EdgeInsets.all(20.0),
+            hintText: "Enter Ingredient",
+            hintStyle: TextStyle(color: Colors.black),
+          ),
+          itemFilter: (item, query) {
+            return item.toLowerCase()
+                .contains(query.toLowerCase());
+          },
+          itemSorter: (a, b) {
+            return a.compareTo(b);
+          },
+          itemSubmitted: (item) {
+            setState(() {
+              searchTextField.textField.controller.text = item;
+            });
+          },
+          itemBuilder: (context, item) {
+            // ui for the autocompelete row
+            return storedRow(item);
           },
         ),
+
         Padding(padding: const EdgeInsets.all(10.0)),
         new Row(
           children: <Widget>[
@@ -453,7 +520,6 @@ class _AddIngredientState extends State<AddIngredient> {
       ],
     );
   }
-
 }
 
 class ExpandableContainer extends StatelessWidget {
