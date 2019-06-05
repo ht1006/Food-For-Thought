@@ -65,12 +65,12 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
-    openAppDatabase().then((result) => db = result);
+    getAllIngredientsList().then((result) => allIngredients = result);
     return FutureBuilder(
-      future: getAllIngredientsList(),
+      future: openAppDatabase(),
       builder: (BuildContext context, AsyncSnapshot snapshot) {
         if (snapshot.hasData) {
-          allIngredients = snapshot.data;
+          db = snapshot.data;
           return new Scaffold(
             appBar: AppBar(
               //leading: Icon(Icons.menu),
@@ -327,8 +327,10 @@ class _ExpandableListViewState extends State<ExpandableListView> {
                     color: Colors.red,
                     icon: Icons.delete,
                     onTap: () {
-                      removeOwnedIngredient(widget.ingredientsList[index].name);
-                      updateIngredientsList(categories[widget.index]);
+                      removeOwnedIngredient(widget.ingredientsList[index]
+                          .name).whenComplete(() {
+                        updateIngredientsList(categories[widget.index]);
+                      });
                     },
                   ),
                 ],
@@ -362,8 +364,8 @@ class _ExpandableListViewState extends State<ExpandableListView> {
       setState(() {
         widget.ingredientsList = result;
         widget.ingredientsList.sort((a, b) =>
-        (a == null) ? -1 :
-        (b == null) ? 1 :
+        (a.expires == null) ? 1 :
+        (b.expires == null) ? -1 :
             a.expires.compareTo(b.expires));
       });
     });
@@ -413,23 +415,30 @@ class _ExpandableListViewState extends State<ExpandableListView> {
               child: Text('ADD'),
               onPressed: () {
                 Navigator.of(context).pop(newIngredient);
-                if (newIngredient.isNotEmpty
-                    && !widget.ingredientsList.contains(newIngredient)) {
-                  if (!isSwitched) {
-                    addOwnedIngredient(categories[widget.index], newIngredient);
-                  } else {
-                    addOwnedIngredientWithExpiry(categories[widget.index],
-                        newIngredient, expiryDate);
-                  }
-                  updateIngredientsList(categories[widget.index]);
-                }
-
+                addNewOwnedIngredient(newIngredient, isSwitched, expiryDate);
               },
             ),
           ],
         );
       },
     );
+  }
+
+  addNewOwnedIngredient(String newIngredient, bool isSwitched, DateTime expiryDate) {
+    if (newIngredient.isEmpty) return;
+
+    getAllOwnedIngredientsList().then((ownedList) {
+      if (ownedList.contains(newIngredient)) return;
+      if (!isSwitched) {
+        addOwnedIngredient(categories[widget.index], newIngredient).whenComplete(() =>
+            updateIngredientsList(categories[widget.index]));
+      } else {
+        addOwnedIngredientWithExpiry(categories[widget.index],
+            newIngredient, expiryDate).whenComplete(() =>
+            updateIngredientsList(categories[widget.index]));
+
+      }
+    });
   }
 }
 
@@ -652,9 +661,11 @@ class _RecipeGenState extends State<RecipeGen> {
   @override
   void initState() {
     super.initState();
-    fetchRecipes().then((recipes) {
-      setState(() {
-        widget.recipesGenerated = recipes;
+    getAllOwnedIngredientsList().then((owned) {
+      fetchRecipes(owned).then((recipes) {
+        setState(() {
+          widget.recipesGenerated = recipes;
+        });
       });
     });
   }

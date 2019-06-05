@@ -53,6 +53,7 @@ Future<List<OwnedIngredient>> getOwnedIngredientList(String category) async {
   return owned;
 }
 
+// Retrieves list of all owned ingredients
 Future<List<OwnedIngredient>> getAllOwnedIngredients() async {
   List<Map> result = await db.query('owned');
   List<OwnedIngredient> list = [];
@@ -76,7 +77,7 @@ Future<List<Ingredient>> getAllIngredientsList() async {
   throw Exception('Failed to load post');
 }
 
-// Gets all the ingredients owned
+// Gets all the ingredients owned (name only, for recipes)
 Future<List<String>> getAllOwnedIngredientsList() async {
   List<Map> result = await db.query('owned');
   List<String> list = [];
@@ -85,8 +86,9 @@ Future<List<String>> getAllOwnedIngredientsList() async {
 }
 
 // Gets recipes based on owned ingredients and decodes from json format
-Future<List<Recipe>> fetchRecipes() async {
-  String jsonOwned = json.encode(getAllOwnedIngredientsList);
+Future<List<Recipe>> fetchRecipes(List<String> ownedIngredients) async {
+  String jsonOwned = json.encode(ownedIngredients);
+  print(ownedIngredients);
   var param = {
     'req': 'recipe',
     'owned' : jsonOwned
