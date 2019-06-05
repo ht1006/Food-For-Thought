@@ -96,15 +96,23 @@ class _HomeState extends State<Home> {
                 ),
               ],
             ),
-            body: _selectedIndex == 0 ? new Container(child: new Column(children: <Widget>[
-              enableSearch ? new SearchBar() : new Container(width: 0, height: 0),
-              new Expanded(child: new ListView.builder(
-                itemBuilder: (BuildContext context, int index) {
-                  return new ExpandableListView(index: index);
-                },
-                itemCount: categories.length,
-              ),)
-            ],),) :_children[_selectedIndex],
+            body: _selectedIndex == 0 ?
+            new Container(
+              child: new Column(
+                children: <Widget>[
+                  enableSearch ? new SearchBar() : new Container(width: 0, height: 0),
+                  new Expanded(
+                    child: new ListView.builder(
+                      itemCount: categories.length,
+                      itemBuilder: (BuildContext context, int index) {
+                        return new ExpandableListView(index: index);
+                      },
+                    ),
+                  )
+                ],
+              ),
+            )
+                : _children[_selectedIndex],
             bottomNavigationBar: BottomNavigationBar(
               items: [
                 BottomNavigationBarItem(
@@ -260,13 +268,8 @@ class _ExpandableListViewState extends State<ExpandableListView> {
   bool expandFlag = false;
 
   @override
-  void initState() {
-    super.initState();
-    updateIngredientsList(categories[widget.index]);
-  }
-
-  @override
   Widget build(BuildContext context) {
+    updateIngredientsList(categories[widget.index]);
     return new Container(
       margin: const EdgeInsets.only(left: 10.0),
       padding: const EdgeInsets.all(15.0),
@@ -344,21 +347,6 @@ class _ExpandableListViewState extends State<ExpandableListView> {
             },
               itemCount: widget.ingredientsList.length,
             )
-
-
-//Maybe useful for sticky header
-//          ExpandableContainer(
-//            expanded: expandFlag,
-//            index: ingredientsList.length,
-//            child: new ListView.builder(
-//                itemBuilder: (BuildContext context, int index) {
-//                  return new StickyHeader(
-//                  header: new Text(ingredientsList[index],),
-//                  content: new ListTile(
-//                    title: new Text(ingredientsList[index],
-//                    ),
-//                  ),);})
-//          )
           )
         ],
       ),
