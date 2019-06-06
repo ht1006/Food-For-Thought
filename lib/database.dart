@@ -1,13 +1,15 @@
 import 'dart:core';
 import 'dart:io';
+import 'dart:convert';
 import 'package:sqflite/sqflite.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'main.dart';
 import 'package:path/path.dart';
+import 'ingredients.dart';
+import 'recipes.dart';
 
 Database db;
 
+// Open local database
 Future<Database> openAppDatabase() async {
   var databasesPath = await getDatabasesPath();
   var path = join(databasesPath, 'app.db');
@@ -88,7 +90,6 @@ Future<List<String>> getAllOwnedIngredientsList() async {
 // Gets recipes based on owned ingredients and decodes from json format
 Future<List<Recipe>> fetchRecipes(List<String> ownedIngredients) async {
   String jsonOwned = json.encode(ownedIngredients);
-  print(ownedIngredients);
   var param = {
     'req': 'recipe',
     'owned' : jsonOwned
@@ -117,21 +118,10 @@ List mapToList(List<Map> records, String key) {
   return list;
 }
 
-class Ingredient {
-  final String name;
-  final DateTime expires;
-
-  Ingredient({this.name, this.expires});
-
-  factory Ingredient.decodeJson(Map<String, dynamic> json) {
-    int duration = int.parse(json['duration']);
-    DateTime date = (duration == 0) ? null :
-                    DateTime.now().add(Duration(days: duration));
-    return Ingredient(
-      name: json['name'],
-      expires: date,
-    );
-  }
+// Return current date with hour, minute, second set to 0
+DateTime getNormalisedCurrentDate() {
+  DateTime now = DateTime.now();
+  return DateTime(now.year, now.month, now.day);
 }
 
 
