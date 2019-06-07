@@ -228,9 +228,6 @@ class _AddIngredientState extends State<AddIngredient> {
               setState(() {
                 widget.expiryDate = date;
                 widget.callbackExpiry(date);
-
-//                widget.scheduled = calculateScheduledDate().add(Duration(hours: 17));
-//                widget.callbackScheduled(widget.scheduled);
               });
             });
             }
@@ -274,34 +271,26 @@ class _AddIngredientState extends State<AddIngredient> {
         Container(
           width: 135,
           height: 25,
-          child: TextFormField(
+          child: TextField(
             enabled: widget.isSwitched && widget.notify,
             keyboardType: TextInputType.number,
             textAlign: TextAlign.center,
             decoration: InputDecoration(
-                hintText: (widget.notify) ? '${widget.daysBefore}' : 'Days Before'
+              hintText: (widget.notify) ? '${widget.daysBefore}' : 'Days Before'
             ),
-            onSaved: (String days) {
-              setState(() {
-                print("Gotten here");
+            onChanged: (String days) {
+                setState(() {
                 int daysBefore = int.parse(days);
                 widget.daysBefore = daysBefore;
                 widget.callbackDays(daysBefore);
 
-//                DateTime scheduled = calculateScheduledDate();
-//                widget.scheduled = scheduled;
-//                widget.callbackScheduled(scheduled);
               });
             },
-          ), // TextFormField
-        ), // Containter
+          ), // TextField
+        ), // Container
       ], // children[Widget]
     ); // Row
   }
-
-//  DateTime calculateScheduledDate() {
-//    return widget.expiryDate.subtract(Duration(days: widget.daysBefore));
-//  }
 
   // Pick time for the reminder
   Widget _getReminderTimeRow() {
@@ -310,7 +299,7 @@ class _AddIngredientState extends State<AddIngredient> {
         Padding(padding: EdgeInsets.fromLTRB(60, 20, 20, 0)),
         RaisedButton(
             child: Text((widget.notify) ?
-            '${widget.scheduled.toString().substring(11, 16)}'
+                widget.time.toString().substring(10,15)
                 : 'Select Time'),
             onPressed: !widget.notify ? null : ()
             {
@@ -325,16 +314,9 @@ class _AddIngredientState extends State<AddIngredient> {
                 }
               ).then((time) {
                 setState(() {
-                  widget.scheduled = DateTime(
-                    widget.scheduled.year,
-                    widget.scheduled.month,
-                    widget.scheduled.day,
-                    time.hour,
-                    time.minute
-                  );
-                  widget.callbackTime(widget.scheduled);
-                  }
-                );
+                  widget.time = time;
+                  widget.callbackTime(time);
+                });
               });
             }
         ) // RaisedButton

@@ -12,10 +12,6 @@ final List<String> appBar = ['Ingredients', 'My Recipes', 'Reduce Food Waste', '
 // Schedule a push notification
 Future<void> scheduleNotification(FlutterLocalNotificationsPlugin notifications,
     String ingredient, DateTime scheduled, int daysBefore) async {
-  //TODO: Debug print
-  print('Days before: $daysBefore');
-  print(scheduled.toString());
-
   var androidPlatformChannelSpecifics =
   new AndroidNotificationDetails(
       '1',

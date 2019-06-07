@@ -275,10 +275,6 @@ class _HomeState extends State<Home> {
                     = expiryDate.subtract(Duration(days: daysBefore))
                                 .add(Duration(hours: time.hour, minutes: time.minute));
 
-                  //TODO DEBUG PRINT
-                  print('Expiry date: $expiryDate');
-                  print('Scheduled at date: $scheduled');
-                  print('Days before: $daysBefore');
                   scheduleNotification(notifications, newIngredient, scheduled, daysBefore);
 
                 }
