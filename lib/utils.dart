@@ -3,10 +3,10 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 //Useful lists
-final List<IconData> menuIcons = <IconData>[Icons.kitchen, Icons.favorite, Icons.lightbulb_outline, Icons.info];
+final List<IconData> menuIcons = <IconData>[Icons.kitchen,Icons.local_dining, FontAwesomeIcons.pagelines];
 final List<String> categories = <String>['Fruits', 'Vegetables', 'Starch', 'Dairy', 'Meats', 'Sweeteners', 'Condiments', 'Seasonings', 'Beverages', 'Others'];
 final List<IconData> icons = <IconData>[FontAwesomeIcons.appleAlt, FontAwesomeIcons.carrot, FontAwesomeIcons.breadSlice, FontAwesomeIcons.cheese, FontAwesomeIcons.drumstickBite, FontAwesomeIcons.candyCane, FontAwesomeIcons.wineBottle, FontAwesomeIcons.pepperHot, FontAwesomeIcons.cocktail, FontAwesomeIcons.pizzaSlice];
-final List<String> appBar = ['Ingredients', 'My Recipes', 'Reduce Food Waste', 'About'];
+final List<String> appBar = ['Ingredients','Recipe Suggestions', 'Reduce Food Waste'];
 
 
 // Schedule a push notification

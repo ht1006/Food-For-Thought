@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import 'seachbar.dart';
 import 'database.dart';
@@ -9,6 +10,7 @@ import 'recipes.dart';
 import 'ingredients.dart';
 import 'tipsPage.dart';
 import 'utils.dart';
+import 'likedRecipes.dart';
 
 
 // Main page
@@ -35,16 +37,12 @@ Widget bottomNavBar(int currentIndex, Function onTap) {
         title: new Text('Ingredients'),
       ),
       BottomNavigationBarItem(
-        icon: new Icon(Icons.favorite),
-        title: new Text('My Recipes'),
+        icon: new Icon(Icons.local_dining),
+        title: new Text('Recipify'),
       ),
       BottomNavigationBarItem(
-          icon: Icon(Icons.lightbulb_outline),
+          icon: Icon(FontAwesomeIcons.pagelines),
           title: Text('Go Green')
-      ),
-      BottomNavigationBarItem(
-          icon: Icon(Icons.info),
-          title: Text('About')
       )
     ],
     currentIndex: currentIndex,
@@ -74,15 +72,8 @@ class _HomeState extends State<Home> {
       'Get the splash page here',
       style: TextStyle(fontSize: 30),
     )),
-    Center(child: Text(
-      'Wassup I\'m recipe page',
-      style: TextStyle(fontSize: 30),
-    )),
-    SaveThePlanetPage(),
-    Center(child: Text(
-      'Wassup I\'m about page',
-      style: TextStyle(fontSize: 30),
-    ))
+    RecipeGen(),
+    SaveThePlanetPage()
   ];
 
   // Setting up for push notifications
@@ -167,11 +158,6 @@ class _HomeState extends State<Home> {
     return [
       _selectedIndex == 0 ?
       IconButton(
-          icon: new Icon(Icons.add),
-          onPressed: () => _asyncAddIngrDialog(context, _scaffoldKey)
-      ) : Container(width: 0, height: 0),
-      _selectedIndex == 0 ?
-      IconButton(
           icon: Icon(Icons.search),
           onPressed: () {
             setState(() {
@@ -180,14 +166,19 @@ class _HomeState extends State<Home> {
           }
       ) : Container(width: 0, height: 0),
       IconButton(
-        icon: Icon(Icons.local_dining),
+        icon: Icon(Icons.favorite),
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => RecipeGen()),
+            MaterialPageRoute(builder: (context) => LikedRecipes()),
           );
         },
       ),
+      _selectedIndex == 0 ?
+      IconButton(
+          icon: new Icon(Icons.add),
+          onPressed: () => _asyncAddIngrDialog(context, _scaffoldKey)
+      ) : Container(width: 0, height: 0),
     ];
   }
 
@@ -287,8 +278,7 @@ class _HomeState extends State<Home> {
     ); // showDialog
   } //_asyncAddIngrDialog
 
-} // Home State
-
+}
 
 //Ingredient dropdown
 class ExpandableListView extends StatefulWidget {

@@ -29,11 +29,6 @@ class _RecipeGenState extends State<RecipeGen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-            title: Text(
-                "Recipe Suggestions", style: new TextStyle(fontSize: 25.0)),
-            backgroundColor: Colors.teal
-        ),
         body: Container(
           child: ListView.builder(
             scrollDirection: Axis.vertical,
