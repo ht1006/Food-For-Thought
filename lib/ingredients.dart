@@ -2,6 +2,7 @@ import 'package:autocomplete_textfield/autocomplete_textfield.dart';
 import 'package:flutter/material.dart';
 
 import 'database.dart';
+import 'utils.dart';
 
 List<Ingredient> allIngredients = [];
 
@@ -86,19 +87,19 @@ class AddIngredient extends StatefulWidget {
   String newIngredient;
   bool isSwitched;
   DateTime expiryDate;
-  DateTime scheduled;
   bool notify;
   int daysBefore;
+  TimeOfDay time;
   Function(String) callbackString;
-  Function(DateTime) callbackDate;
-  Function(DateTime) callbackScheduled;
   Function(bool) callbackSwitch;
+  Function(DateTime) callbackExpiry;
   Function(bool) callbackNotify;
   Function(int) callbackDays;
+  Function(TimeOfDay) callbackTime;
 
 
-  AddIngredient(this.newIngredient, this.isSwitched, this.expiryDate, this.scheduled, this.notify, this.daysBefore,
-      this.callbackString, this.callbackSwitch, this.callbackDate, this.callbackScheduled, this.callbackNotify, this.callbackDays);
+  AddIngredient(this.newIngredient, this.isSwitched, this.expiryDate, this.notify, this.daysBefore, this.time,
+      this.callbackString, this.callbackSwitch, this.callbackExpiry, this.callbackNotify, this.callbackDays, this.callbackTime);
 
   @override
   _AddIngredientState createState() => new _AddIngredientState();
@@ -108,21 +109,6 @@ class _AddIngredientState extends State<AddIngredient> {
   AutoCompleteTextField searchTextField;
   GlobalKey<AutoCompleteTextFieldState<Ingredient>> key = new GlobalKey();
 
-  // A suggestion row for an ingredient to add
-  Widget _ingredientSuggestion(Ingredient item) {
-    return Container(
-      padding: EdgeInsets.all(3.0),
-      decoration: BoxDecoration(
-          border: Border(bottom: BorderSide(color: Colors.grey))
-      ),
-      child: Text(
-        item.name,
-        style: TextStyle(fontSize: 20.0),
-      ),
-    );
-  }
-
-
   @override
   Widget build(BuildContext context) {
     List<Widget> dialogList = [
@@ -130,17 +116,7 @@ class _AddIngredientState extends State<AddIngredient> {
       Padding(padding: const EdgeInsets.all(10.0)),
       _getExpirationRow(),
       Padding(padding: const EdgeInsets.all(5)),
-      new Row(
-        children: <Widget>[
-          Text(
-              'Expiration reminder',
-              style: TextStyle(
-                fontSize: 15,
-                color: (widget.isSwitched) ? Colors.black : Colors.grey,
-              ) // TextStyle
-          ) // Text
-        ], // children[Widget]
-      ), // Row
+      _getReminderTitle(),
       Padding(padding: const EdgeInsets.all(5)),
       _getReminderDaysRow(),
       _getReminderTimeRow()
@@ -158,6 +134,23 @@ class _AddIngredientState extends State<AddIngredient> {
         ) // Expanded
       ], // children[Widget]
     ); // Column
+  }
+
+  /// WIDGET METHODS
+
+
+  // A suggestion row for an ingredient to add
+  Widget _ingredientSuggestion(Ingredient item) {
+    return Container(
+      padding: EdgeInsets.all(3.0),
+      decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: Colors.grey))
+      ),
+      child: Text(
+        item.name,
+        style: TextStyle(fontSize: 20.0),
+      ),
+    );
   }
 
   AutoCompleteTextField<Ingredient> _getAutoCompleteTextField() {
@@ -184,7 +177,7 @@ class _AddIngredientState extends State<AddIngredient> {
           widget.callbackString(item.name);
 
           widget.expiryDate = item.expires;
-          widget.callbackDate(item.expires);
+          widget.callbackExpiry(item.expires);
 
           searchTextField.clear();
           searchTextField.textField.controller.text = item.name;
@@ -196,6 +189,7 @@ class _AddIngredientState extends State<AddIngredient> {
       },
     ); // AutoCompleteTextField
   }
+
   // Set expiration date for the item
   Widget _getExpirationRow() {
     return Row(
@@ -233,12 +227,29 @@ class _AddIngredientState extends State<AddIngredient> {
             ).then((date) {
               setState(() {
                 widget.expiryDate = date;
-                widget.callbackDate(date);
+                widget.callbackExpiry(date);
+
+//                widget.scheduled = calculateScheduledDate().add(Duration(hours: 17));
+//                widget.callbackScheduled(widget.scheduled);
               });
             });
             }
         ) // RaisedButton
-      ], // childre[Widget]
+      ], // children[Widget]
+    ); // Row
+  }
+
+  Widget _getReminderTitle() {
+    return Row(
+      children: <Widget>[
+        Text(
+            'Expiration reminder',
+            style: TextStyle(
+              fontSize: 15,
+              color: (widget.isSwitched) ? Colors.black : Colors.grey,
+            ) // TextStyle
+        ) // Text
+      ], // children[Widget]
     ); // Row
   }
 
@@ -250,10 +261,8 @@ class _AddIngredientState extends State<AddIngredient> {
           value: widget.isSwitched && widget.notify,
           onChanged: (val) {
             if (widget.isSwitched) {
-              widget.notify = val;
               setState(() {
-                widget.scheduled = widget.expiryDate.subtract(Duration(days: widget.daysBefore));
-                widget.callbackScheduled(widget.scheduled);
+                widget.notify = val;
                 widget.callbackNotify(val);
               });
             }
@@ -274,10 +283,14 @@ class _AddIngredientState extends State<AddIngredient> {
             ),
             onSaved: (String days) {
               setState(() {
-                widget.daysBefore = int.parse(days);
-                widget.callbackDays(widget.daysBefore);
-                widget.scheduled = widget.expiryDate.subtract(Duration(days: widget.daysBefore));
-                widget.callbackScheduled(widget.scheduled);
+                print("Gotten here");
+                int daysBefore = int.parse(days);
+                widget.daysBefore = daysBefore;
+                widget.callbackDays(daysBefore);
+
+//                DateTime scheduled = calculateScheduledDate();
+//                widget.scheduled = scheduled;
+//                widget.callbackScheduled(scheduled);
               });
             },
           ), // TextFormField
@@ -285,6 +298,10 @@ class _AddIngredientState extends State<AddIngredient> {
       ], // children[Widget]
     ); // Row
   }
+
+//  DateTime calculateScheduledDate() {
+//    return widget.expiryDate.subtract(Duration(days: widget.daysBefore));
+//  }
 
   // Pick time for the reminder
   Widget _getReminderTimeRow() {
@@ -315,7 +332,7 @@ class _AddIngredientState extends State<AddIngredient> {
                     time.hour,
                     time.minute
                   );
-                  widget.callbackScheduled(widget.scheduled);
+                  widget.callbackTime(widget.scheduled);
                   }
                 );
               });
@@ -325,7 +342,6 @@ class _AddIngredientState extends State<AddIngredient> {
     ); // Row
   }
 
-
 } // _AddIngredientState
 
 
@@ -333,10 +349,10 @@ class _AddIngredientState extends State<AddIngredient> {
 /// FUNCTIONS REGARDING INGREDIENTS
 
 // Functions for adding ingredients to the database
-void addNewOwnedIngredient(GlobalKey<ScaffoldState> key, String newIngredient, bool isSwitched, DateTime expiryDate) {
+bool addNewOwnedIngredient(GlobalKey<ScaffoldState> key, String newIngredient, bool isSwitched, DateTime expiryDate) {
   getAllOwnedIngredientsList().then((ownedList) {
     if (!_isValidIngredient(key, newIngredient, ownedList))
-      return;
+      return false;
 
     String category = _getIngredientCategory(newIngredient);
     if (!isSwitched) {
@@ -345,6 +361,7 @@ void addNewOwnedIngredient(GlobalKey<ScaffoldState> key, String newIngredient, b
       addOwnedIngredientWithExpiry(category, newIngredient, expiryDate);
     }
   });
+  return true;
 }
 
 // Determines the category in which given ingredient belongs

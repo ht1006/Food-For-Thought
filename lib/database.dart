@@ -9,7 +9,9 @@ import 'recipes.dart';
 
 Database db;
 
-// Open local database
+/// LOCAL DATABASE FUNCTIONS (Owned ingredients)
+
+// Open local database, create one if it does not exist
 Future<Database> openAppDatabase() async {
   var databasesPath = await getDatabasesPath();
   var path = join(databasesPath, 'app.db');
@@ -32,6 +34,7 @@ Future addOwnedIngredient(String category, String ingredient) async {
       OwnedIngredient(name: ingredient, category: category).toMap());
 }
 
+// Add an ingredient to the 'owned' table with an expiry date
 Future addOwnedIngredientWithExpiry(String category, String ingredient,
     DateTime expires) async {
   await db.insert('owned',
@@ -64,8 +67,17 @@ Future<List<OwnedIngredient>> getAllOwnedIngredients() async {
   return list;
 }
 
+// Gets all the ingredients owned (name only, for recipes)
+Future<List<String>> getAllOwnedIngredientsList() async {
+  List<Map> result = await db.query('owned');
+  List<String> list = [];
+  result.forEach((ingr) => list.add(ingr['name']));
+  return list;
+}
 
-// Gets a list of all ingredients appearing in the database
+/// REMOTE DATABASE
+
+// Gets a list of all ingredients appearing in the remote database
 Future<List<Ingredient>> getAllIngredientsList() async {
   http.Response resp = await http.get('https://fft-group3.herokuapp.com/?req=list');
   if (resp.statusCode == 200) {
@@ -77,14 +89,6 @@ Future<List<Ingredient>> getAllIngredientsList() async {
     return allIngredients;
   }
   throw Exception('Failed to load post');
-}
-
-// Gets all the ingredients owned (name only, for recipes)
-Future<List<String>> getAllOwnedIngredientsList() async {
-  List<Map> result = await db.query('owned');
-  List<String> list = [];
-  result.forEach((ingr) => list.add(ingr['name']));
-  return list;
 }
 
 // Gets recipes based on owned ingredients and decodes from json format
@@ -107,21 +111,6 @@ Future<List<Recipe>> fetchRecipes(List<String> ownedIngredients) async {
     return recipes;
   }
   throw Exception('Failed to load post');
-}
-
-// Returns a list of elements from one column
-List mapToList(List<Map> records, String key) {
-  List list = [];
-  records.forEach((mapping) {
-    list.add(mapping[key].toString());
-  });
-  return list;
-}
-
-// Return current date with hour, minute, second set to 0
-DateTime getNormalisedCurrentDate() {
-  DateTime now = DateTime.now();
-  return DateTime(now.year, now.month, now.day);
 }
 
 
