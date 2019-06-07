@@ -31,8 +31,6 @@ class MyApp extends StatelessWidget {
 }
 
 class Home extends StatefulWidget {
-  bool refresh = false;
-
   Home({Key key}) : super(key: key);
 
   @override
@@ -41,6 +39,7 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   static bool enableSearch = false;
+  static bool refresh = false;
   int _selectedIndex = 0;
   final List<String> _appBar = ['Ingredients', 'My Recipes', 'Reduce Food Waste', 'About'];
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
@@ -71,8 +70,8 @@ class _HomeState extends State<Home> {
 
     final settingsAndroid = AndroidInitializationSettings('app_icon');
     final settingsIOS = IOSInitializationSettings(
-        onDidReceiveLocalNotification: (id, title, body, payload) {
-          notifications.cancel(0);
+        onDidReceiveLocalNotification: (id, title, body, payload) async {
+          await notifications.cancel(0);
           onSelectNotification(payload);
         });
 
@@ -87,6 +86,10 @@ class _HomeState extends State<Home> {
   );
 
   Future<void> scheduleNotification(String ingredient, DateTime expiryDate, DateTime scheduled, int daysBefore) async {
+    //TODO: Debug print
+    print('Days before: ${daysBefore}');
+    print(expiryDate.toString());
+
     var androidPlatformChannelSpecifics =
     new AndroidNotificationDetails(
         '1',
@@ -120,7 +123,7 @@ class _HomeState extends State<Home> {
             key: _scaffoldKey,
             appBar: AppBar(
               leading: Icon(menuIcons[_selectedIndex]),
-              title: Text(_appBar[_selectedIndex], style: new TextStyle(fontSize: 25.0)),
+              title: Text(_appBar[_selectedIndex], style: new TextStyle(fontSize: MediaQuery.of(context).size.width * 0.063)),
               backgroundColor: Colors.teal,
               actions: <Widget>[
                 _selectedIndex == 0 ?
@@ -197,7 +200,7 @@ class _HomeState extends State<Home> {
 
   void refreshPage() {
     setState(() {
-      widget.refresh = !widget.refresh;
+      refresh = !refresh;
     });
   }
 
@@ -211,7 +214,8 @@ class _HomeState extends State<Home> {
       GlobalKey<ScaffoldState> key) async {
     String newIngredient = '';
     DateTime expiryDate;
-    DateTime scheduled = DateTime.now();
+    DateTime now = DateTime.now();
+    DateTime scheduled = DateTime(now.year, now.month, now.day, 17);
     bool isSwitched = false;
     bool notify = false;
     int daysBefore = 3;
@@ -256,37 +260,39 @@ class _HomeState extends State<Home> {
       context: context,
       barrierDismissible: true, // dialog is dismissible with a tap on the barrier
       builder: (BuildContext context) {
-        return ListView.builder(
-          itemCount: 1,
-          itemBuilder: (BuildContext context, int index) {
-            return AlertDialog(
-              title: Text('Add Ingredient'),
-              content: new Container(
-                  width: 300,
-                  height: 250,
-                  child: AddIngredient(newIngredient, isSwitched, expiryDate, scheduled, notify, daysBefore,
-                      callbackString, callbackSwitch, callbackDate, callbackScheduled, callbackNotify, callbackDays)
-              ),
+        return AlertDialog(
+          title: Text('Add Ingredient'),
+          content:
+//            ListView.builder(
+//              itemCount: 1,
+//              itemBuilder: (BuildContext context, int index) {
+                Container(
+                    width: 300,
+                    height: 250,
+                    child: AddIngredient(newIngredient, isSwitched, expiryDate, scheduled, notify, daysBefore,
+                    callbackString, callbackSwitch, callbackDate, callbackScheduled, callbackNotify, callbackDays)
+                ), // Container
+//              }
+//            ), // ListView
+          actions: <Widget>[
+            RaisedButton(
+              color: Colors.teal,
+              textColor: Colors.white,
+              child: Text('ADD'),
+              onPressed: () {
+                Navigator.of(context).pop(newIngredient);
+                addNewOwnedIngredient(key, newIngredient, isSwitched, expiryDate);
+                if (notify)
+                  scheduleNotification(newIngredient, expiryDate, scheduled, daysBefore);
+                refreshPage();
 
-              actions: <Widget>[
-                RaisedButton(
-                  color: Colors.teal,
-                  textColor: Colors.white,
-                  child: Text('ADD'),
-                  onPressed: () {
-                    Navigator.of(context).pop(newIngredient);
-                    addNewOwnedIngredient(key, newIngredient, isSwitched,
-                        expiryDate, scheduled, notify, daysBefore, scheduleNotification);
-                    refreshPage();
-                  },
-                ),
-              ],
-            );
-          },
-        );
+              },
+            ), // RaisedButton
+          ], // actions[Widget]
+        ); // Dialog box
       },
-    );
-  }
+    ); // showDialog
+  } //_asyncAddIngrDialog
 }
 
 // Create navigation bar at the bottom of the screen
