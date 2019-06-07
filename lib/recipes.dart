@@ -71,6 +71,7 @@ class _RecipeGenState extends State<RecipeGen> {
 
   Widget _makeRecipeListTile(int index) {
     Recipe recipe = widget.recipesGenerated[index];
+    List<String> plural = (recipe.missing > 1) ? ['s', 'are'] : ['', 'is'];
     return ListTile(
         contentPadding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 40.0),
         title: Text(
@@ -101,7 +102,7 @@ class _RecipeGenState extends State<RecipeGen> {
         //TODO: Temporary, change to icons to indicate missing ingredient or sth
         subtitle: Text(
             (recipe.missing > 0) ?
-                '${recipe.missing} ingredients are missing' : '',
+              '${recipe.missing} ingredient${plural[0]} ${plural[1]} missing' : '',
             style: TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,

@@ -61,7 +61,7 @@ class SaveThePlanetPage extends StatelessWidget {
       itemHeight: cardHeight,
       itemBuilder: (context, index) {
         return new Container(
-          decoration: new BoxDecoration(borderRadius: BorderRadius.circular(20.0), color: Color(0xfff5ded2)),
+          decoration: new BoxDecoration(borderRadius: BorderRadius.circular(20.0), color: Color.fromRGBO(201, 228, 201, 0.5)),
           child: new Column(
               children: <Widget>[
                 Padding(padding: const EdgeInsets.fromLTRB(12, 25, 12, 12),

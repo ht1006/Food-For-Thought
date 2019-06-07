@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import 'database.dart';
 
+
 List<Ingredient> allIngredients = [];
 
 // Class to represent an ingredient
@@ -69,11 +70,12 @@ class OwnedIngredient {
 
   String getExpirationText() {
     int difference = getDifferenceInDays();
+    String plural = (difference > 1) ? 's' : '';
     return (difference == -1) ? "No expiration date" :
-    ((difference == 0) ? "Expired today" :
-    ((hasExpired()) ? "Expired for $difference day"
-        : "Expires in $difference day") +
-        ((difference > 1) ? 's' : ''));
+    (difference == 0) ? "Expired today" :
+    (hasExpired()) ? "Expired for $difference day$plural" :
+    (difference < 31) ? "Expires in $difference day$plural"
+        : "Expires ${expires.day}/${expires.month}/${expires.year}";
   }
 
 }
@@ -83,15 +85,21 @@ class OwnedIngredient {
 class AddIngredient extends StatefulWidget {
 
   String newIngredient;
-  DateTime expiryDate;
-  String expirationText = "Add Expiry Date";
   bool isSwitched;
+  DateTime expiryDate;
+  DateTime scheduled;
+  bool notify;
+  int daysBefore;
   Function(String) callbackString;
   Function(DateTime) callbackDate;
+  Function(DateTime) callbackScheduled;
   Function(bool) callbackSwitch;
+  Function(bool) callbackNotify;
+  Function(int) callbackDays;
 
-  AddIngredient(this.newIngredient, this.isSwitched, this.expiryDate, this
-      .callbackString, this.callbackDate, this.callbackSwitch);
+
+  AddIngredient(this.newIngredient, this.isSwitched, this.expiryDate, this.scheduled, this.notify, this.daysBefore,
+      this.callbackString, this.callbackSwitch, this.callbackDate, this.callbackScheduled, this.callbackNotify, this.callbackDays);
 
   @override
   _AddIngredientState createState() => new _AddIngredientState();
@@ -101,17 +109,19 @@ class _AddIngredientState extends State<AddIngredient> {
   AutoCompleteTextField searchTextField;
   GlobalKey<AutoCompleteTextFieldState<Ingredient>> key = new GlobalKey();
 
-  Widget storedRow(Ingredient item) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: <Widget>[
-        Text(
-          item.name,
-          style: TextStyle(fontSize: 20.0),
-        ),
-      ],
+  Widget ingredientSuggestion(Ingredient item) {
+    return Container(
+      padding: EdgeInsets.all(3.0),
+      decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: Colors.grey))
+      ),
+      child: Text(
+        item.name,
+        style: TextStyle(fontSize: 20.0),
+      ),
     );
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -121,7 +131,6 @@ class _AddIngredientState extends State<AddIngredient> {
           key: key,
           clearOnSubmit: false,
           suggestions: allIngredients,
-          textChanged: (text) => widget.callbackString(text),
           style: TextStyle(color: Colors.black, fontSize: 16.0),
           decoration: InputDecoration(
             suffixIcon: Icon(Icons.search, color: Colors.black),
@@ -145,7 +154,7 @@ class _AddIngredientState extends State<AddIngredient> {
           },
           itemBuilder: (context, item) {
             // ui for the autocompelete row
-            return storedRow(item);
+            return ingredientSuggestion(item);
           },
         ),
 
@@ -158,8 +167,6 @@ class _AddIngredientState extends State<AddIngredient> {
                 setState(() {
                   widget.isSwitched = val;
                   widget.callbackSwitch(val);
-                  widget.expirationText
-                  = widget.expiryDate.toString().substring(0, 11);
                 });
               },
               activeTrackColor: Colors.teal,
@@ -167,7 +174,9 @@ class _AddIngredientState extends State<AddIngredient> {
             ),
             Padding(padding: const EdgeInsets.all(10.0)),
             new RaisedButton(
-                child: Text(widget.expirationText),
+                child: Text((widget.isSwitched && widget.expiryDate != null) ?
+                '${widget.expiryDate.day}/${widget.expiryDate.month}/${widget.expiryDate.year}'
+                    : 'Add Expiry Date'),
                 onPressed: !widget.isSwitched ? null : ()
                 { showDatePicker(
                   context: context,
@@ -182,24 +191,92 @@ class _AddIngredientState extends State<AddIngredient> {
                   },
                 ).then((date) {
                   setState(() {
-                    widget.expirationText = date.toString().substring(0, 11);
                     widget.callbackDate(date);
                   });
                 });
+              }
+            ) // RaisedButton
+          ], // childre[Widget]
+        ), // Row
+        new Row(
+          children: <Widget>[
+            Switch(
+              value: widget.isSwitched && widget.notify,
+              onChanged: (val) {
+                if (widget.isSwitched) {
+                  widget.notify = val;
+                  setState(() {
+                    widget.callbackNotify(val);
+                  });
                 }
-            )
-          ],
-        )
-      ],
-    );
+              },
+              activeTrackColor: Colors.teal,
+              activeColor: Colors.teal,
+            ),
+            Padding(padding: const EdgeInsets.all(10.0)),
+            Container(
+              width: 135,
+              height: 30,
+              child: TextFormField(
+                enabled: widget.notify,
+                keyboardType: TextInputType.number,
+                textAlign: TextAlign.center,
+                decoration: InputDecoration(
+                    hintText: (widget.notify) ? widget.daysBefore.toString() : 'Reminder',
+                ),
+                onSaved: (String days) {
+                  setState(() {
+                    widget.callbackDays(int.parse(days));
+                    DateTime scheduled = widget.expiryDate.subtract(Duration(days: int.parse(days)));
+                    scheduled = DateTime(scheduled.year, scheduled.month, scheduled.day, 17);
+                    widget.callbackScheduled(scheduled);
+                  });
+                },
+              ), // TextFormField
+            ), // Containter
+          ], // children[Widget]
+        ), // Row
+        new Row(
+          children: <Widget>[
+            Padding(padding: EdgeInsets.all(40),),
+            new RaisedButton(
+                child: Text((widget.notify) ?
+                '${widget.scheduled.hour}:${widget.scheduled.minute}'
+                    : 'Select Time'),
+                onPressed: !widget.notify ? null : ()
+                {
+                  showTimePicker(
+                      context: context,
+                      initialTime: TimeOfDay(hour: 17, minute: 0),
+                      builder: (BuildContext context, Widget child) {
+                        return Theme(
+                          data: ThemeData(primaryColor: Colors.teal, accentColor: Colors.teal),
+                          child: child
+                        );
+                      }).then((time) {
+                        DateTime date = DateTime(
+                            widget.scheduled.year,
+                            widget.scheduled.month,
+                            widget.scheduled.day,
+                            time.hour,
+                            time.minute
+                        );
+                        widget.callbackScheduled(date);
+                  });
+                }
+            ) // RaisedButton
+          ], // children[Widget]
+        ) // Row
+      ], // children[Widget]
+    ); // Column
   }
 }
 
 
 // Functions for adding ingredients to the database
-void addNewOwnedIngredient(GlobalKey<ScaffoldState> key, String newIngredient, bool isSwitched, DateTime expiryDate) {
+void addNewOwnedIngredient(GlobalKey<ScaffoldState> key, String newIngredient, bool isSwitched, DateTime expiryDate, DateTime scheduled, bool notify, int daysBefore, Function(String, DateTime, DateTime, int) scheduleNotification) {
   if (newIngredient.isEmpty) return;
-
+  print("daysBefore: $daysBefore");
   getAllOwnedIngredientsList().then((ownedList) {
     if (!isValidIngredient(key, newIngredient, ownedList))
       return;
@@ -209,6 +286,7 @@ void addNewOwnedIngredient(GlobalKey<ScaffoldState> key, String newIngredient, b
       addOwnedIngredient(category, newIngredient);
     } else {
       addOwnedIngredientWithExpiry(category, newIngredient, expiryDate);
+      if (notify) scheduleNotification(newIngredient, expiryDate, scheduled, daysBefore);
     }
   });
 }
@@ -230,11 +308,11 @@ String getIngredientCategory(String newIngredient) {
 bool isValidIngredient(GlobalKey<ScaffoldState> key, String newIngredient, List<String>
 ownedList) {
   if (ownedList.contains(newIngredient)) {
-    _showSnackBar(key, 'Ingredient already owned');
+    showSnackBar(key, 'Ingredient already owned');
     return false;
   }
   bool isValid = ingredientListToStringList().contains(newIngredient);
-  if (!isValid) _showSnackBar(key, 'Invalid ingredient!');
+  if (!isValid) showSnackBar(key, 'Invalid ingredient!');
   return isValid;
 }
 // Converts list of all ingredients into a list of strings
@@ -245,7 +323,7 @@ List<String> ingredientListToStringList() {
 }
 
 // Snackbar
-void _showSnackBar(GlobalKey<ScaffoldState> key, String text) {
+void showSnackBar(GlobalKey<ScaffoldState> key, String text) {
   key.currentState.showSnackBar(
       SnackBar(
         content: Text(text),
