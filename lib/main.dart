@@ -365,6 +365,7 @@ class _ExpandableListViewState extends State<ExpandableListView> {
       child: Container(
           child: new Row(
             children: <Widget>[
+              new Icon(Icons.arrow_right, color: Colors.red, size: 25,),
               new Expanded(child: new ListTile(title: new Text(element.name),)),
               new FlatButton(
                   onPressed: () {},
