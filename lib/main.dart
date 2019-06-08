@@ -6,11 +6,10 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import 'seachbar.dart';
 import 'database.dart';
-import 'recipes.dart';
 import 'ingredients.dart';
-import 'tipsPage.dart';
 import 'utils.dart';
-import 'likedRecipes.dart';
+import 'recipesPage.dart';
+import 'tipsPage.dart';
 
 
 // Main page
@@ -27,41 +26,16 @@ class MyApp extends StatelessWidget {
   }
 }
 
-// Create navigation bar at the bottom of the screen
-Widget bottomNavBar(int currentIndex, Function onTap) {
-  return BottomNavigationBar(
-    type: BottomNavigationBarType.fixed,
-    items: [
-      BottomNavigationBarItem(
-        icon: new Icon(Icons.kitchen),
-        title: new Text('Ingredients'),
-      ),
-      BottomNavigationBarItem(
-        icon: new Icon(Icons.local_dining),
-        title: new Text('Recipify'),
-      ),
-      BottomNavigationBarItem(
-          icon: Icon(FontAwesomeIcons.pagelines),
-          title: Text('Go Green')
-      )
-    ],
-    currentIndex: currentIndex,
-    selectedItemColor: Colors.teal,
-    onTap: onTap,
-  );
-}
-
 // Home page
+
 class Home extends StatefulWidget {
   Home({Key key}) : super(key: key);
 
   @override
   _HomeState createState() => new _HomeState();
 }
-
 class _HomeState extends State<Home> {
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
-  final notifications = FlutterLocalNotificationsPlugin();
   bool _enableSearch = false;
   bool _refresh = false;
   int _selectedIndex = 0;
@@ -108,6 +82,11 @@ class _HomeState extends State<Home> {
           key: _scaffoldKey,
           appBar: _getAppBar(),
           body: (_selectedIndex == 0) ? _homePage() : _children[_selectedIndex],
+          floatingActionButton: FloatingActionButton(
+              child: Icon(Icons.add),
+              backgroundColor: Colors.teal,
+              onPressed: () => _asyncAddIngrDialog(context, _scaffoldKey)
+          ), // FloatingActionButton
           bottomNavigationBar: bottomNavBar(_selectedIndex, _onItemTapped),
         ); // Scaffold
       }
@@ -116,21 +95,8 @@ class _HomeState extends State<Home> {
   }
 
   /// Widget functions
-
-  Widget _getAppBar() {
-    return AppBar(
-      leading: Icon(menuIcons[_selectedIndex]),
-      backgroundColor: Colors.teal,
-      actions: _getAppBarWidgets(),
-      title: Text(
-          appBar[_selectedIndex],
-          style: new TextStyle(fontSize: MediaQuery.of(context).size.width * 0.063)
-      ), // Text
-    ); // AppBar
-  }
-
   Widget _splashPage() {
-    return new Container(
+    return Container(
         decoration: new BoxDecoration(color: Colors.white),
         child: new Center(
             child: new CircularProgressIndicator(
@@ -153,7 +119,19 @@ class _HomeState extends State<Home> {
     ); // Container
   }
 
-  // Icon at the tob of the screen (app bar)
+  Widget _getAppBar() {
+    return AppBar(
+      leading: Icon(menuIcons[_selectedIndex]),
+      backgroundColor: Colors.teal,
+      actions: _getAppBarWidgets(),
+      title: Text(
+          appBar[_selectedIndex],
+          style: new TextStyle(fontSize: MediaQuery.of(context).size.width * 0.063)
+      ), // Text
+    ); // AppBar
+  }
+
+  // Icons at the tob of the screen (app bar)
   List<Widget> _getAppBarWidgets() {
     return [
       _selectedIndex == 0 ?
@@ -170,15 +148,15 @@ class _HomeState extends State<Home> {
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => LikedRecipes()),
+            MaterialPageRoute(builder: (context) => LikedRecipeGen()),
           );
         },
       ),
-      _selectedIndex == 0 ?
-      IconButton(
-          icon: new Icon(Icons.add),
-          onPressed: () => _asyncAddIngrDialog(context, _scaffoldKey)
-      ) : Container(width: 0, height: 0),
+//      _selectedIndex == 0 ?
+//      IconButton(
+//          icon: new Icon(Icons.add),
+//          onPressed: () => _asyncAddIngrDialog(context, _scaffoldKey)
+//      ) : Container(width: 0, height: 0),
     ];
   }
 
@@ -266,7 +244,7 @@ class _HomeState extends State<Home> {
                     = expiryDate.subtract(Duration(days: daysBefore))
                                 .add(Duration(hours: time.hour, minutes: time.minute));
 
-                  scheduleNotification(notifications, newIngredient, scheduled, daysBefore);
+                  scheduleNotification(newIngredient, scheduled, daysBefore);
 
                 }
                 refreshPage();
@@ -278,6 +256,30 @@ class _HomeState extends State<Home> {
     ); // showDialog
   } //_asyncAddIngrDialog
 
+}
+
+// Create navigation bar at the bottom of the screen
+Widget bottomNavBar(int currentIndex, Function onTap) {
+  return BottomNavigationBar(
+    type: BottomNavigationBarType.fixed,
+    items: [
+      BottomNavigationBarItem(
+        icon: new Icon(Icons.kitchen),
+        title: new Text('Ingredients'),
+      ),
+      BottomNavigationBarItem(
+        icon: new Icon(Icons.local_dining),
+        title: new Text('Recipefy'),
+      ),
+      BottomNavigationBarItem(
+          icon: Icon(FontAwesomeIcons.pagelines),
+          title: Text('Go Green')
+      )
+    ],
+    currentIndex: currentIndex,
+    selectedItemColor: Colors.teal,
+    onTap: onTap,
+  );
 }
 
 //Ingredient dropdown

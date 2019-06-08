@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:path/path.dart';
 import 'ingredients.dart';
 import 'recipes.dart';
+import 'utils.dart';
 
 Database db;
 
@@ -22,9 +23,9 @@ Future<Database> openAppDatabase() async {
     } catch (_) {}
   }
 
-  return await openDatabase(path, version: 1, onCreate: (db, version) {
-    return db.execute('CREATE TABLE owned(name TEXT NOT NULL, '
-        'category TEXT NOT NULL, expire TEXT)');
+  return await openDatabase(path, version: 1, onCreate: (db, version) async {
+    await db.execute('CREATE TABLE owned(name TEXT PRIMARY KEY, category TEXT NOT NULL, expire TEXT)');
+    await db.execute('CREATE TABLE liked(id INTEGER PRIMARY KEY)');
   });
 }
 
@@ -45,6 +46,7 @@ Future addOwnedIngredientWithExpiry(String category, String ingredient,
 // Removes an ingredient to the 'owned' table
 Future removeOwnedIngredient(String ingredient) async {
   await db.delete('owned', where: '"name" = ?', whereArgs: [ingredient]);
+  cancelNotification(ingredient);
 }
 
 // Retrieves list of owned ingredients from the given category
@@ -58,7 +60,7 @@ Future<List<OwnedIngredient>> getOwnedIngredientList(String category) async {
   return owned;
 }
 
-// Retrieves list of all owned ingredients
+// Retrieves list of all owned ingredients, for search bar
 Future<List<OwnedIngredient>> getAllOwnedIngredients() async {
   List<Map> result = await db.query('owned');
   List<OwnedIngredient> list = [];
@@ -67,12 +69,32 @@ Future<List<OwnedIngredient>> getAllOwnedIngredients() async {
   return list;
 }
 
-// Gets all the ingredients owned (name only, for recipes)
+// Gets all the ingredients owned (name only)
 Future<List<String>> getAllOwnedIngredientsList() async {
   List<Map> result = await db.query('owned');
   List<String> list = [];
   result.forEach((ingr) => list.add(ingr['name']));
   return list;
+}
+
+// Add a recipe to the 'liked' table
+Future addRecipeToLiked(Recipe recipe) async {
+  db.insert('liked', {'id': recipe.id});
+}
+
+// Remove a recipe from the liked table
+Future removeRecipeFromLiked(int id) async {
+  db.delete('liked', where: '"id" = ?', whereArgs: [id]);
+}
+
+// Retrieve all the liked recipes
+Future<List<int>> getLikedRecipes() async {
+  List<Map> results = await db.query('liked');
+  List<int> likedList = [];
+  results.forEach((recipe) {
+    likedList.add(recipe['id']);
+  });
+  return likedList;
 }
 
 /// REMOTE DATABASE
@@ -93,25 +115,54 @@ Future<List<Ingredient>> getAllIngredientsList() async {
 
 // Gets recipes based on owned ingredients and decodes from json format
 Future<List<Recipe>> fetchRecipes(List<String> ownedIngredients) async {
-  String jsonOwned = json.encode(ownedIngredients);
   var param = {
     'req': 'recipe',
-    'owned' : jsonOwned
+    'owned' : json.encode(ownedIngredients)
   };
+  List jsonList = await _getRequest(param);
+
+  List<int> likedList = await getLikedRecipes();
+  List<Recipe> recipes = [];
+  jsonList.forEach((obj) {
+    Recipe recipe = Recipe.decodeJson(obj);
+    recipes.add(_setLiked(recipe, likedList));
+  });
+  return recipes;
+}
+
+// Set a recipe to liked if it is in database table 'liked'
+Recipe _setLiked(Recipe recipe, List<int> likedList) {
+  for (int i = 0; i < likedList.length; i++) {
+    if (recipe.id == likedList[i]) {
+      recipe.liked = true;
+      break;
+    }
+  }
+  return recipe;
+}
+
+// Get the info of all liked recipes
+Future<List<Recipe>> getAllLikedRecipesInfo(List<int> likedList) async {
+  var param = {
+    'req': 'liked',
+    'ids' : json.encode(likedList)
+  };
+  List jsonList = await _getRequest(param);
+  List<Recipe> likedRecipes = [];
+  jsonList.forEach((obj) {
+    Recipe recipe = Recipe.decodeJson(obj);
+    recipe.liked = true;
+    likedRecipes.add(recipe);
+  });
+  return likedRecipes;
+}
+
+// Send an http get request to the database
+Future<List> _getRequest(Map param) async {
   Uri uri = Uri.parse('https://fft-group3.herokuapp.com/').replace(queryParameters: param);
   http.Response resp = await http.get(uri, headers: {HttpHeaders.contentTypeHeader: "application/json"} );
-
   if (resp.statusCode == 200) {
-    List<Recipe> recipes = [];
-    List jsonList = json.decode(resp.body);
-
-    jsonList.forEach((obj) {
-      recipes.add(Recipe.decodeJson(obj));
-    });
-    return recipes;
+    return json.decode(resp.body);
   }
   throw Exception('Failed to load post');
 }
-
-
-

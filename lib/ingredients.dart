@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:autocomplete_textfield/autocomplete_textfield.dart';
 import 'package:flutter/material.dart';
 
@@ -8,17 +10,19 @@ List<Ingredient> allIngredients = [];
 
 // Class to represent an ingredient
 class Ingredient {
+  final int id;
   final String name;
   final String category;
   final DateTime expires;
 
-  Ingredient({this.name, this.category, this.expires});
+  Ingredient({this.id, this.name, this.category, this.expires});
 
   factory Ingredient.decodeJson(Map<String, dynamic> json) {
-    int duration = int.parse(json['duration']);
+    int duration = json['duration'];
     DateTime date = (duration == 0) ? null :
     getNormalisedCurrentDate().add(Duration(days: duration));
     return Ingredient(
+      id: json['id'],
       name: json['name'],
       category: json['category'],
       expires: date,
@@ -32,7 +36,7 @@ class OwnedIngredient {
   String category;
   DateTime expires;
 
-  OwnedIngredient({Key key, this.name, this.category, this.expires});
+  OwnedIngredient({this.name, this.category, this.expires});
 
   Map<String, dynamic> toMap() {
     return {'name': name, 'category': category, 'expire': expires.toString()};
@@ -336,7 +340,7 @@ bool addNewOwnedIngredient(GlobalKey<ScaffoldState> key, String newIngredient, b
     if (!_isValidIngredient(key, newIngredient, ownedList))
       return false;
 
-    String category = _getIngredientCategory(newIngredient);
+    String category = getIngredientElement(newIngredient).category;
     if (!isSwitched) {
       addOwnedIngredient(category, newIngredient);
     } else {
@@ -346,25 +350,12 @@ bool addNewOwnedIngredient(GlobalKey<ScaffoldState> key, String newIngredient, b
   return true;
 }
 
-// Determines the category in which given ingredient belongs
-String _getIngredientCategory(String newIngredient) {
-  String category = '';
-  for (int i = 0; i < allIngredients.length; i++) {
-    Ingredient element = allIngredients[i];
-    if (element.name.compareTo(newIngredient) == 0) {
-      category = element.category;
-      break;
-    }
-  }
-  return category;
-}
-
 // Check whether submitted ingredient is valid
 bool _isValidIngredient(GlobalKey<ScaffoldState> key, String newIngredient, List<String>
 ownedList) {
   bool isValid = true;
   if (newIngredient.isEmpty) {
-    _showSnackBar(key, 'Invalid ingredient!');
+    _showSnackBar(key, 'Please select an ingredient from the list');
     isValid = false;
   }
   if (ownedList.contains(newIngredient)) {
@@ -382,4 +373,16 @@ void _showSnackBar(GlobalKey<ScaffoldState> key, String text) {
         duration: Duration(seconds: 2),
       )
   );
+}
+
+// Retrieves the Ingredient element matching the given newIngredient
+Ingredient getIngredientElement(String newIngredient) {
+  Ingredient element;
+  for (int i = 0; i < allIngredients.length; i++) {
+    if (allIngredients[i].name.compareTo(newIngredient) == 0) {
+      element = allIngredients[i];
+      break;
+    }
+  }
+  return element;
 }
