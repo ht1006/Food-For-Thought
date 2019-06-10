@@ -33,9 +33,9 @@ class SaveThePlanetPage extends StatelessWidget {
         "front so you consume them first."
   ];
 
-  List<String> images = ["https://bit.ly/2MvayJb", "https://bit.ly/2XswN3n",
-    "https://bit.ly/2Imuqsr", "https://bit.ly/2IjEAtT", "https://bit.ly/31aCEMZ",
-    "https://bit.ly/2Wk6Ly1", "https://bit.ly/2Z6OMwz"];
+  List<String> images = ["https://bit.ly/2gEtUuW", "https://bit.ly/2Woab2x",
+    "https://bit.ly/2R9TvLr", "https://bit.ly/2MAiCrZ", "https://bit.ly/2MRQ4KT",
+    "https://bit.ly/2K5OG4V", "https://bit.ly/2X14Z9b"];
 
   @override
   Widget build(BuildContext context) {
