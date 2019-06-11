@@ -41,7 +41,7 @@ deploy:
   file: build/app/outputs/apk/app.apk
   skip_cleanup: true
   on:
-    repo: xym0112/FoodForThought
+    repo: ht1006/Food-For-Thought
     branches:
       only:
         - master

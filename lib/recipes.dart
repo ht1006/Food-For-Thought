@@ -88,10 +88,13 @@ class _RecipeState extends State<Recipe> {
   }
 
   _displayDirections(String directions, BuildContext context) {
+    int count = 0;
     var splitDir = directions.split("\\n").map((i) {
+      count++;
       return Container(
           child: new Column(children: <Widget>[
-            Text(i, style: TextStyle(fontSize: 20.0)),
+            Padding(padding: EdgeInsets.fromLTRB(12, 8, 12, 8),child:
+             Text(count.toString() + ". " + i, style: TextStyle(fontSize: 20.0))),
             Padding(padding: const EdgeInsets.all(5.0))
           ]));
     }).toList();
@@ -123,8 +126,8 @@ class IngredientUsed extends StatelessWidget {
     return Align(
         alignment: Alignment.centerLeft,
         child: Container(
-            child: Text(formatIngredientText(text),
-                style: TextStyle(fontSize: 20.0))
+            child: Padding(padding: EdgeInsets.fromLTRB(12, 3, 12, 3),child:Text(formatIngredientText(text),
+                style: TextStyle(fontSize: 20.0)))
         )
     );
   }
