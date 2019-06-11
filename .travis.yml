@@ -1,43 +1,43 @@
 os: linux
 language: android
 licenses:
-  - android-sdk-preview-license-.+
-  - android-sdk-license-.+
-  - google-gdk-license-.+
+- android-sdk-preview-license-.+
+- android-sdk-license-.+
+- google-gdk-license-.+
 android:
   components:
-    - tools
-    - platform-tools
-    - build-tools-28.0.3
-    - android-28
-    - sys-img-armeabi-v7a-google_apis-25
-    - extra-android-m2repository
-    - extra-google-m2repository
-    - extra-google-android-support
+  - tools
+  - platform-tools
+  - build-tools-28.0.3
+  - android-28
+  - sys-img-armeabi-v7a-google_apis-25
+  - extra-android-m2repository
+  - extra-google-m2repository
+  - extra-google-android-support
 jdk: oraclejdk8
 sudo: false
 addons:
   apt:
     sources:
-      - ubuntu-toolchain-r-test
+    - ubuntu-toolchain-r-test
     packages:
-      - libstdc++6
-      - fonts-droid
+    - libstdc++6
+    - fonts-droid
 before_script:
-  - git clone https://github.com/flutter/flutter.git
-  - export PATH=`pwd`/flutter/bin:`pwd`/flutter/bin/cache/dart-sdk/bin:$PATH
-  - flutter doctor
-  - pub global activate flutter_plugin_tools
+- git clone https://github.com/flutter/flutter.git
+- export PATH=`pwd`/flutter/bin:`pwd`/flutter/bin/cache/dart-sdk/bin:$PATH
+- flutter doctor
+- pub global activate flutter_plugin_tools
 script:
-  - flutter test test/widget_test.dart
+- flutter test test/widget_test.dart
 sources:
-  - ubuntu-toolchain-r-test
+- ubuntu-toolchain-r-test
 before_deploy:
-  - "./flutter/bin/flutter -v build apk"
+- "./flutter/bin/flutter -v build apk"
 deploy:
   provider: releases
   api_key:
-    secure: UU7ke/UELS/iyAAAWXSS6tPvEhjGVrOrmjbiQbgEvvyJ0VvGWlajIKnzp4HUESW5ZZFRdVdK705J/ucEQPzz2Kfeehm2uzCRXuWtbg3ECfvIx+jId31I3msV859S7URfxHDO1PGJtk9beUqrtSQdnkyvVMzIEFF21Zb9Wk8izXjses1R1/cCaPVa0yS/AZCXTYChQJxYhPX6UHd7Minz/QZ2kmE5GRX6UqO6DBr45RTVL/cyhGK62B6b27lF3zFnuBwePOX6oi+H3bC6GIOJoUnBSVYcdnCci/JhSvY0LXQgLb2Y3w2fFppe6XrT1n5Xy1SPhSyItzUtEpTpwYFJwWiyOv3qVFrQVPqP2TnHqF0W1+1Vjey5JxVOxpPOsU+zMNl+kM64s0rvVdzsU8LtV9TVQNDFki/mzg3vS6JYJulZMH3pZpMKTGKYTVcTrhFYvjAKyr3GRiciePiBWM2BbiT83Xt2A4HF8T/HQRzDeeba8iZ/7aKd2sUgCN0YF1M+fYbX7JZFZ+QleGUPdQGLWEgI0UuPkij4bBM3NXNhKnJIMTW7QX2jCRxK3gGZurzAGjAuaQn7yZhikVrRKs04ujdsFVRQ98bd1m5ul/ewhT0eCnAmCKN2unGDomwB3/tkug1U3G/bCjAQ/gV4fKG5E7AfrK3kC6WWSwPIfEuKCEM=
+    secure: HOxopdq7lN8DggiZzWmY40VHiTBWU6WoLrVi/CEmoQW8F6SFhXh1cl9q3NZIc3EWJrbPgb/+U2vNt7bJqGsmdTmRLZO9Mfe1QWkzFihSLkhCwmsIrzc+GHGRh51FG1G5FxIx5oPY0fIwCMsimD7nPDcExMSrYoFzEWp+tE3RfFiHh/Oq0M1KxscnK2AZMrDJywC5E97EsScyoon/yUX+G1uzpwILoHwGSDHed2CtQxzxQ0lppTip/nugHqjwalupAJwLdJx53gccqftsC7p7ELQO8J/qhvNaq/zfwa1oh6XnrKHHohv7yZjD49lpMnS7/8w2Mqwd6u5G3UNbORkdwzI2lG/X3taB3hfOdhdeZlj7jlSAypRm6sv91W6h+PI9G+ZDLeN5hgujWkIHC5BZcLWj2zxYGITQs+kjCc4ZsKmmeWPTEiH2IXj91sp5Ttzwmgh9HqYLQ+HBWiBwIMthz/Tx12f8aaj4rw5GbOvmD1odN7ozBJUc639eo5r7cmDAD0XlVONlX6bv12odCVyJIwmMYOigCFAilZ7adEWVu2ZqfgyjnYyD5uOpwTOMKWaW+agPjWTmS0e8yYfrBblBacht+tCjP1oN61YpMc58Dt0mOp8S68x3Pb2s0UijIoRUgStJhulPSYo5i37LyfNttTTB0LOieoInqLEGwoSgDe4=
   file: build/app/outputs/apk/app.apk
   skip_cleanup: true
   on:
@@ -45,6 +45,7 @@ deploy:
     branches:
       only:
         - master
+    tags: true
 cache:
   directories:
     - "$HOME/.pub-cache"
