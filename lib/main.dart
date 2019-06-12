@@ -42,10 +42,7 @@ class _HomeState extends State<Home> {
 
   //Store different pages. Index 0 is Ingredients page, 1 is My Recipes, 3 is FAQ
   final List<Widget> _children = [
-    Center(child: Text(
-      'Get the splash page here',
-      style: TextStyle(fontSize: 30),
-    )),
+    Container(),
     RecipeGen(),
     SaveThePlanetPage()
   ];
@@ -76,35 +73,31 @@ class _HomeState extends State<Home> {
     return FutureBuilder(
       future: openAppDatabase(),
       builder: (BuildContext context, AsyncSnapshot snapshot) {
-        if (!snapshot.hasData) return _splashPage();
+        if (!snapshot.hasData) return Container();
+
         db = snapshot.data;
-        return new Scaffold(
+        return (_selectedIndex == 0) ?
+        Scaffold(
           key: _scaffoldKey,
           appBar: _getAppBar(),
-          body: (_selectedIndex == 0) ? _homePage() : _children[_selectedIndex],
+          body:  _homePage(),
           floatingActionButton: FloatingActionButton(
               child: Icon(Icons.add),
               backgroundColor: Colors.teal,
               onPressed: () => _asyncAddIngrDialog(context, _scaffoldKey)
           ), // FloatingActionButton
           bottomNavigationBar: bottomNavBar(_selectedIndex, _onItemTapped),
+        ) // Scaffold
+            :
+        Scaffold(
+          appBar: _getAppBar(),
+          body: _children[_selectedIndex],
+          bottomNavigationBar: bottomNavBar(_selectedIndex, _onItemTapped),
         ); // Scaffold
+
       }
     ); // FutureBuilder
 
-  }
-
-  /// Widget functions
-  Widget _splashPage() {
-    return Container(
-        decoration: new BoxDecoration(color: Colors.white),
-        child: new Center(
-            child: new CircularProgressIndicator(
-                backgroundColor: Colors.teal,
-                strokeWidth: 5
-            )
-        )
-    ); // Container
   }
 
   // Get the ingredients page
@@ -151,12 +144,7 @@ class _HomeState extends State<Home> {
             MaterialPageRoute(builder: (context) => LikedRecipeGen()),
           );
         },
-      ),
-//      _selectedIndex == 0 ?
-//      IconButton(
-//          icon: new Icon(Icons.add),
-//          onPressed: () => _asyncAddIngrDialog(context, _scaffoldKey)
-//      ) : Container(width: 0, height: 0),
+      ), // IconButton
     ];
   }
 

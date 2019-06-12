@@ -6,8 +6,8 @@ import 'ingredients.dart';
 
 //Useful lists
 final List<IconData> menuIcons = <IconData>[Icons.kitchen,Icons.local_dining, FontAwesomeIcons.pagelines];
-final List<String> categories = <String>['Fruits', 'Vegetables', 'Starch', 'Dairy', 'Meats', 'Sweeteners', 'Condiments', 'Seasonings', 'Beverages', 'Others'];
-final List<IconData> icons = <IconData>[FontAwesomeIcons.appleAlt, FontAwesomeIcons.carrot, FontAwesomeIcons.breadSlice, FontAwesomeIcons.cheese, FontAwesomeIcons.drumstickBite, FontAwesomeIcons.candyCane, FontAwesomeIcons.wineBottle, FontAwesomeIcons.pepperHot, FontAwesomeIcons.cocktail, FontAwesomeIcons.pizzaSlice];
+final List<String> categories = <String>['Fruits', 'Vegetables', 'Carbs', 'Dairy', 'Meats', 'Sweeteners', 'Condiments', 'Seasonings', 'Others'];
+final List<IconData> icons = <IconData>[FontAwesomeIcons.appleAlt, FontAwesomeIcons.carrot, FontAwesomeIcons.breadSlice, FontAwesomeIcons.cheese, FontAwesomeIcons.drumstickBite, FontAwesomeIcons.candyCane, FontAwesomeIcons.wineBottle, FontAwesomeIcons.pepperHot, FontAwesomeIcons.cocktail];
 final List<String> appBar = ['Ingredients','Recipe Suggestions', 'Reduce Food Waste'];
 
 final notifications = FlutterLocalNotificationsPlugin();

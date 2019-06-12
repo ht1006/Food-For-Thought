@@ -107,14 +107,16 @@ class IngredientUsed extends StatelessWidget {
   final String ingredientName;
   final int quantity;
   final String unit;
+  final bool missing;
 
-  const IngredientUsed({Key key, this.ingredientName, this.quantity, this.unit}) : super(key: key);
+  const IngredientUsed({Key key, this.ingredientName, this.quantity, this.unit, this.missing}) : super(key: key);
 
   factory IngredientUsed.decodeJson(Map<String, dynamic> json) {
     return IngredientUsed(
       ingredientName: json['name'],
       quantity: json['quantity'],
       unit: json['unit'],
+      missing: json['missing'],
     );
   }
 
@@ -123,13 +125,21 @@ class IngredientUsed extends StatelessWidget {
     String text = (quantity == 0 ? unit :
     ('$quantity' + (unit == '' ? '' : (' $unit of'))))
         + ' $ingredientName' + ((quantity > 1 && unit == '') ? 's' : '');
+
     return Align(
         alignment: Alignment.centerLeft,
         child: Container(
-            child: Padding(padding: EdgeInsets.fromLTRB(12, 3, 12, 3),child:Text(formatIngredientText(text),
-                style: TextStyle(fontSize: 20.0)))
-        )
-    );
+            child: Padding(padding: EdgeInsets.fromLTRB(12, 3, 12, 3),
+                child: Text(
+                    formatIngredientText(text),
+                    style: TextStyle(
+                        color: (missing) ? Colors.red : Colors.black,
+                        fontSize: 20.0
+                    ) // TextStyle
+                ) // Text
+            ) // Padding
+        ) // Container
+    ); // Align
   }
 
   String formatIngredientText(String text) {

@@ -12,15 +12,18 @@ import 'package:food_for_thought/main.dart';
 
 void main() {
 //  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-//    / Build our app and trigger a frame.
+//    // Build our app and trigger a frame.
 //    await tester.pumpWidget(MyApp());
 //
 //    // Verify that our counter starts at 0.
-//    expect(find.text('Ingredients'), findsNWidgets(2));
-//    expect(find.text('Fruit'), findsOneWidget);
+//    //expect(find.text('Ingredients'), findsNWidgets(2));
+//    expect(find.text('Fruits'), findsOneWidget);
 //    expect(find.text('Vegetables'), findsOneWidget);
 //    expect(find.text('Dairy'), findsOneWidget);
-//    expect(find.text('Meat'), findsOneWidget);
-//    expect(find.text('Spices'), findsOneWidget); /
+//    expect(find.text('Meats'), findsOneWidget);
+//    expect(find.text('Sweeteners'), findsOneWidget);
+//    expect(find.text('Condiments'), findsOneWidget);
+//    expect(find.text('Seasonings'), findsOneWidget);
+//    expect(find.text('Others'), findsOneWidget);
 //  });
 }
