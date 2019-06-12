@@ -12,6 +12,7 @@ class RecipeGen extends StatefulWidget {
 
 class _RecipeGenState extends State<RecipeGen> {
   List<Recipe> recipesGenerated = [];
+  bool _noRecipes = false;
 
   @override
   void initState() {
@@ -20,27 +21,39 @@ class _RecipeGenState extends State<RecipeGen> {
       fetchRecipes(owned).then((recipes) {
         setState(() {
           recipes.sort((a, b) => a.missing.compareTo(b.missing));
+          _noRecipes = recipes.isEmpty;
           recipesGenerated = recipes;
         });
       });
     });
   }
 
-  //TODO: If no result, display 'No result' text
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        body: Container(
-          child: ListView.builder(
-            scrollDirection: Axis.vertical,
-            shrinkWrap: true,
-            itemCount: recipesGenerated.length,
-            itemBuilder: (BuildContext context, int index) {
-              return _makeRecipeCard(context,  recipesGenerated[index]);
-            },
-          ),
-        )
-    );
+        body: (_noRecipes) ?
+          Center(
+              child: Text(
+                'No recipes found',
+                style: TextStyle(
+                  color: Colors.teal,
+                  fontSize: MediaQuery.of(context).size.width * 0.065,
+                  fontWeight: FontWeight.bold
+                ), // TextStyle
+              ) // Text
+          ) // Center
+          :
+          Container(
+            child: ListView.builder(
+              scrollDirection: Axis.vertical,
+              shrinkWrap: true,
+              itemCount: recipesGenerated.length,
+              itemBuilder: (BuildContext context, int index) {
+                return _makeRecipeCard(context,  recipesGenerated[index]);
+              },
+            ), // ListView
+          ) // Container
+    ); // Scaffold
   }
 }
 
@@ -54,6 +67,8 @@ class LikedRecipeGen extends StatefulWidget {
 
 class _LikedRecipeGenState extends State<LikedRecipeGen> {
   List<Recipe> recipesGenerated = [];
+  bool _noRecipes = false;
+
 
   @override
   void initState() {
@@ -61,34 +76,46 @@ class _LikedRecipeGenState extends State<LikedRecipeGen> {
     getLikedRecipes().then((likedList) {
       getAllLikedRecipesInfo(likedList).then((liked) {
         setState(() {
+          _noRecipes = liked.isEmpty;
           recipesGenerated = liked;
         });
       });
     });
   }
 
-  //TODO: If no result, display 'No result' text
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          backgroundColor: Colors.teal,
-          title: Text(
-              'Liked Recipes',
-              style: new TextStyle(fontSize: MediaQuery.of(context).size.width * 0.063)
-          ), // Text
-        ),
-        body: Container(
-          child: ListView.builder(
-            scrollDirection: Axis.vertical,
-            shrinkWrap: true,
-            itemCount: recipesGenerated.length,
-            itemBuilder: (BuildContext context, int index) {
-              return _makeRecipeCard(context, recipesGenerated[index]);
-            },
-          ),
-        )
-    );
+          appBar: AppBar(
+            backgroundColor: Colors.teal,
+            title: Text(
+                'Liked Recipes',
+                style: new TextStyle(fontSize: MediaQuery.of(context).size.width * 0.063)
+            ), // Text
+          ), // AppBar
+          body: (_noRecipes) ?
+            Center(
+                child: Text(
+                  'No liked recipes',
+                  style: TextStyle(
+                    color: Colors.teal,
+                    fontSize: MediaQuery.of(context).size.width * 0.065,
+                    fontWeight: FontWeight.bold
+                  ), // TextStyle
+                ) // Text
+            ) // Center
+            :
+            Container(
+              child: ListView.builder(
+                scrollDirection: Axis.vertical,
+                shrinkWrap: true,
+                itemCount: recipesGenerated.length,
+                itemBuilder: (BuildContext context, int index) {
+                  return _makeRecipeCard(context, recipesGenerated[index]);
+                },
+              ), // ListView
+            ) // Container
+      ); // Scaffold
   }
 }
 
@@ -131,7 +158,7 @@ Widget _makeRecipeListTile(BuildContext context, Recipe recipe) {
             fontSize: 27.0,
             shadows: _getShadowTextStyle(Colors.black, 1.5)),
       ), // Text
-      //TODO: Maybe do icons to indicate missing ingredient or sth
+
       subtitle: Text(
         (recipe.missing > 0) ?
         '${recipe.missing} ingredient${plural[0]} ${plural[1]} missing' : '',
