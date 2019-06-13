@@ -5,3 +5,4 @@ pubspec.lock
 build/
 .flutter-plugins
 local.properties
+android/local.properties
