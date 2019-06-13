@@ -45,7 +45,6 @@ deploy:
     branches:
       only:
         - master
-    tags: true
 cache:
   directories:
     - "$HOME/.pub-cache"
