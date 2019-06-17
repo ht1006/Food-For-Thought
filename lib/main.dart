@@ -13,7 +13,7 @@ import 'ingredients.dart';
 import 'utils.dart';
 import 'recipesPage.dart';
 import 'tipsPage.dart';
-
+import 'addRecipe.dart';
 
 // Main page
 void main() => runApp(MyApp());
@@ -62,7 +62,7 @@ class _HomeState extends State<Home> {
     final settingsAndroid = AndroidInitializationSettings('app_icon');
     final settingsIOS = IOSInitializationSettings(
         onDidReceiveLocalNotification: (id, title, body, payload)
-          => _onSelectNotification(payload));
+        => _onSelectNotification(payload));
     notifications.initialize(
         InitializationSettings(settingsAndroid, settingsIOS),
         onSelectNotification: _onSelectNotification);
@@ -78,31 +78,31 @@ class _HomeState extends State<Home> {
   Widget build(BuildContext context) {
     getAllIngredientsList().then((result) => allIngredients = result);
     return FutureBuilder(
-      future: openAppDatabase(),
-      builder: (BuildContext context, AsyncSnapshot snapshot) {
-        if (!snapshot.hasData) return Container();
+        future: openAppDatabase(),
+        builder: (BuildContext context, AsyncSnapshot snapshot) {
+          if (!snapshot.hasData) return Container();
 
-        db = snapshot.data;
-        return (_selectedIndex == 0) ?
-        Scaffold(
-          key: _scaffoldKey,
-          appBar: _getAppBar(),
-          body:  _homePage(),
-          floatingActionButton: FloatingActionButton(
-              child: Icon(Icons.add),
-              backgroundColor: Colors.teal,
-              onPressed: () => _asyncAddIngrDialog(context, _scaffoldKey)
-          ), // FloatingActionButton
-          bottomNavigationBar: bottomNavBar(_selectedIndex, _onItemTapped),
-        ) // Scaffold
-            :
-        Scaffold(
-          appBar: _getAppBar(),
-          body: _children[_selectedIndex],
-          bottomNavigationBar: bottomNavBar(_selectedIndex, _onItemTapped),
-        ); // Scaffold
+          db = snapshot.data;
+          return (_selectedIndex == 0) ?
+          Scaffold(
+            key: _scaffoldKey,
+            appBar: _getAppBar(),
+            body:  _homePage(),
+            floatingActionButton: FloatingActionButton(
+                child: Icon(Icons.add),
+                backgroundColor: Colors.teal,
+                onPressed: () => _asyncAddIngrDialog(context, _scaffoldKey)
+            ), // FloatingActionButton
+            bottomNavigationBar: bottomNavBar(_selectedIndex, _onItemTapped),
+          ) // Scaffold
+              :
+          Scaffold(
+            appBar: _getAppBar(),
+            body: _children[_selectedIndex],
+            bottomNavigationBar: bottomNavBar(_selectedIndex, _onItemTapped),
+          ); // Scaffold
 
-      }
+        }
     ); // FutureBuilder
 
   }
@@ -131,6 +131,8 @@ class _HomeState extends State<Home> {
     ); // AppBar
   }
 
+
+
   // Icons at the tob of the screen (app bar)
   List<Widget> _getAppBarWidgets() {
     return [
@@ -143,15 +145,28 @@ class _HomeState extends State<Home> {
             });
           }
       ) : Container(width: 0, height: 0),
-      IconButton(
-        icon: Icon(Icons.favorite),
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => LikedRecipeGen()),
-          );
-        },
-      ), // IconButton
+      Row(children: <Widget>[
+        _selectedIndex == 1 ?
+        IconButton(
+          icon: Icon(FontAwesomeIcons.pen),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => AddRecipe()),
+            );
+          },
+        ) : Container(width: 0, height: 0),// IconButton
+
+        IconButton(
+          icon: Icon(Icons.favorite),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => LikedRecipeGen()),
+            );
+          },
+        ),// IconButton
+      ],)
     ];
   }
 
@@ -236,8 +251,8 @@ class _HomeState extends State<Home> {
                 bool added = addNewOwnedIngredient(key, newIngredient, isSwitched, expiryDate);
                 if (added && notify) {
                   DateTime scheduled
-                    = expiryDate.subtract(Duration(days: daysBefore))
-                                .add(Duration(hours: time.hour, minutes: time.minute));
+                  = expiryDate.subtract(Duration(days: daysBefore))
+                      .add(Duration(hours: time.hour, minutes: time.minute));
 
                   scheduleNotification(newIngredient, scheduled, daysBefore);
 
