@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'database.dart';
+import 'dart:convert';
 
 //Recipe class - stores info regarding each recipe
 class Recipe extends StatefulWidget  {
@@ -12,7 +13,7 @@ class Recipe extends StatefulWidget  {
   int missing;
   bool liked;
 
-  Recipe({Key key, this.id, this.name, this.directions, this.image, this
+  Recipe({Key key, this.id = 0, this.name, this.directions, this.image, this
       .ingredientsUsed, this.missing, this.liked = false}) : super(key: key);
 
   factory Recipe.decodeJson(Map<String, dynamic> json) {
@@ -29,6 +30,19 @@ class Recipe extends StatefulWidget  {
       image: json['image'],
       missing: json['missing'],
     );
+  }
+
+  Map<String, dynamic> encodeJson() {
+    List encodedIngredients = [];
+    ingredientsUsed.forEach((ingr) {
+      encodedIngredients.add(ingr.encodeJson());
+    });
+   return {
+     "name" : name,
+     "directions": directions,
+     "image": image,
+     "ingredients": json.encode(encodedIngredients)
+   };
   }
 
   @override
@@ -104,12 +118,13 @@ class _RecipeState extends State<Recipe> {
 
 // Class representing the ingredient used in a recipe
 class IngredientUsed extends StatelessWidget {
+  final int id;
   final String ingredientName;
   final int quantity;
   final String unit;
   final bool missing;
 
-  const IngredientUsed({Key key, this.ingredientName, this.quantity, this.unit, this.missing}) : super(key: key);
+  const IngredientUsed({Key key, this.id = 0, this.ingredientName, this.quantity, this.unit, this.missing = false}) : super(key: key);
 
   factory IngredientUsed.decodeJson(Map<String, dynamic> json) {
     return IngredientUsed(
@@ -118,6 +133,14 @@ class IngredientUsed extends StatelessWidget {
       unit: json['unit'],
       missing: json['missing'],
     );
+  }
+
+   encodeJson() {
+    return json.encode({
+      'id': id,
+      'quantity': quantity,
+      'unit': unit,
+    });
   }
 
   @override
@@ -146,4 +169,8 @@ class IngredientUsed extends StatelessWidget {
     return '\u2022 ' + text[0].toUpperCase() + text.substring(1).toLowerCase();
   }
 
+  String display() {
+    return quantity.toString() + ' ' + unit + ' ' + ingredientName;
+  }
 }
+

@@ -166,3 +166,22 @@ Future<List> _getRequest(Map param) async {
   }
   throw Exception('Failed to load post');
 }
+
+
+void uploadNewRecipe(Recipe recipe) {
+  var param = {
+    'req': 'new',
+    'recipe' : json.encode(recipe.encodeJson())
+  };
+  _postRequest(param);
+}
+
+// Send an http post request to the database
+Future<List> _postRequest(Map param) async {
+  Uri uri = Uri.parse('https://fft-group3.herokuapp.com/').replace(queryParameters: param);
+  http.Response resp = await http.post(uri, headers: {HttpHeaders.contentTypeHeader: "application/json"} );
+  if (resp.statusCode == 200) {
+    return json.decode(resp.body);
+  }
+  throw Exception('Failed to upload recipe');
+}

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:autocomplete_textfield/autocomplete_textfield.dart';
 import 'ingredients.dart';
+import 'recipes.dart';
+import 'database.dart';
 
 /// Add recipe page
 class AddRecipe extends StatefulWidget {
@@ -11,13 +13,17 @@ class AddRecipe extends StatefulWidget {
 
 class _AddRecipeState extends State<AddRecipe> {
 
-  List<String> submittedIngredients = [];
+  List<IngredientUsed> submittedIngredients = [];
   final TextEditingController quantController = new TextEditingController();
   final TextEditingController unitsController = new TextEditingController();
 
+  String recipeName;
+  String image = "";
+  String directions;
   String quantity = "";
   String units = "";
   String ingredient = "";
+  int id = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +59,7 @@ class _AddRecipeState extends State<AddRecipe> {
                     Padding(padding: const EdgeInsets.all(5)),
                     Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
                       RaisedButton(child:
-                      Text("Submit Ingredient",
+                      Text("Add Ingredient",
                         style: TextStyle(fontSize: 16),),
                         onPressed:() {_submitIngredient();},
                         color: Colors.teal,
@@ -81,7 +87,7 @@ class _AddRecipeState extends State<AddRecipe> {
                             alignment: Alignment.centerLeft,
                             child: Container(
                               child: Text(
-                                submittedIngredients[index],
+                                submittedIngredients[index].display(),
                                 style: TextStyle(fontSize: 20),
                               ),
                             ),));
@@ -101,19 +107,21 @@ class _AddRecipeState extends State<AddRecipe> {
   }
 
   _submitIngredient() {
-    submittedIngredients.add(quantity + " " + units + " " + ingredient);
+    submittedIngredients.add(IngredientUsed(id: id, ingredientName: ingredient, quantity: int.parse(quantity), unit: units));
     quantController.clear();
-    quantity = "";
     unitsController.clear();
-    units = "";
     searchTextField.clear();
-    ingredient = "";
     setState(() {});
   }
 
 
   _submitRecipe() {
-    //TODO: to submit the recipe
+    uploadNewRecipe(Recipe(
+      name: recipeName,
+      directions: directions,
+      image: image,
+      ingredientsUsed: submittedIngredients,
+    ));
   }
 
   Widget _addOneSection(String title, String insideSearch) {
@@ -123,9 +131,12 @@ class _AddRecipeState extends State<AddRecipe> {
         child: Container(
           child: Text(
             title, style: TextStyle(fontSize: 22),
+
           ),
         ),)),
-      Padding(padding: const EdgeInsets.fromLTRB(10, 5, 10, 10), child: TextField(
+      Padding(padding: const EdgeInsets.fromLTRB(10, 5, 10, 10),
+        child: TextField(
+          onChanged: (text) => (title == "Title:") ? recipeName = text : image = text,
         decoration: InputDecoration(
           enabledBorder: OutlineInputBorder(
               borderSide: BorderSide(color: Colors.teal),
@@ -164,6 +175,7 @@ class _AddRecipeState extends State<AddRecipe> {
               child: SizedBox(
                 height: 200.0,
                 child: new TextField(
+                  onChanged: (text) => directions = text,
                   maxLines: 100,
                   decoration: new InputDecoration(
                     enabledBorder: OutlineInputBorder(
@@ -198,7 +210,6 @@ class _AddRecipeState extends State<AddRecipe> {
         _getAutoCompleteTextField(),
 
       ],)
-
     ],);
   }
 
@@ -257,6 +268,7 @@ class _AddRecipeState extends State<AddRecipe> {
           itemSubmitted: (item) {
             setState(() {
               ingredient = item.name;
+              id = item.id;
 
               //TODO: why the rows aren't going away
               //TODO: why text is not the selected text
@@ -285,5 +297,4 @@ class _AddRecipeState extends State<AddRecipe> {
       ),
     );
   }
-
 }

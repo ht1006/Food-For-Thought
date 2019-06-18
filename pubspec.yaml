@@ -32,8 +32,6 @@ dependencies:
   flutter_local_notifications: ^0.7.1+1
   path_provider: ^1.1.0
   flutter_launcher_icons: ^0.7.2
-  firebase_core: 0.2.5+1
-  firebase_analytics: ^1.1.0
 
 dev_dependencies:
   flutter_test:
