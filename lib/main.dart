@@ -118,7 +118,7 @@ class _HomeState extends State<Home> {
       actions: _getAppBarWidgets(),
       title: Text(
           appBar[_selectedIndex],
-          style: new TextStyle(fontSize: MediaQuery.of(context).size.width * 0.063)
+          style: new TextStyle(fontSize: MediaQuery.of(context).size.width * 0.06)
       ), // Text
     ); // AppBar
   }

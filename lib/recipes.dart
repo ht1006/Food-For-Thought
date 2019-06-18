@@ -35,11 +35,11 @@ class Recipe extends StatefulWidget  {
   Map<String, dynamic> encodeJson() {
     List encodedIngredients = [];
     ingredientsUsed.forEach((ingr) {
-      encodedIngredients.add(ingr.encodeJson());
+      encodedIngredients.add(json.encode(ingr.encodeJson()));
     });
    return {
      "name" : name,
-     "directions": directions,
+     "directions": directions.replaceAll('\n', '\\n'),
      "image": image,
      "ingredients": json.encode(encodedIngredients)
    };
@@ -136,25 +136,21 @@ class IngredientUsed extends StatelessWidget {
   }
 
    encodeJson() {
-    return json.encode({
+    return {
       'id': id,
       'quantity': quantity,
       'unit': unit,
-    });
+    };
   }
 
   @override
   Widget build(BuildContext context) {
-    String text = (quantity == 0 ? unit :
-    ('$quantity' + (unit == '' ? '' : (' $unit of'))))
-        + ' $ingredientName' + ((quantity > 1 && unit == '') ? 's' : '');
-
     return Align(
         alignment: Alignment.centerLeft,
         child: Container(
             child: Padding(padding: EdgeInsets.fromLTRB(12, 3, 12, 3),
                 child: Text(
-                    formatIngredientText(text),
+                    display(),
                     style: TextStyle(
                         color: (missing) ? Colors.red : Colors.black,
                         fontSize: 20.0
@@ -165,12 +161,15 @@ class IngredientUsed extends StatelessWidget {
     ); // Align
   }
 
-  String formatIngredientText(String text) {
+  String _formatIngredientText(String text) {
     return '\u2022 ' + text[0].toUpperCase() + text.substring(1).toLowerCase();
   }
 
   String display() {
-    return quantity.toString() + ' ' + unit + ' ' + ingredientName;
+    String text = (quantity == 0 ? unit :
+    ('$quantity' + (unit == '' ? '' : (' $unit of'))))
+        + ' $ingredientName' + ((quantity > 1 && unit == '') ? 's' : '');
+    return _formatIngredientText(text);
   }
 }
 

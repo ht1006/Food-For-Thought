@@ -17,13 +17,14 @@ class _AddRecipeState extends State<AddRecipe> {
   final TextEditingController quantController = new TextEditingController();
   final TextEditingController unitsController = new TextEditingController();
 
-  String recipeName;
-  String image = "";
-  String directions;
-  String quantity = "";
-  String units = "";
-  String ingredient = "";
+  String recipeName = '';
+  String image = '';
+  String directions = '';
+
   int id = 0;
+  String ingredient = '';
+  String quantity = '';
+  String unit = '';
 
   @override
   Widget build(BuildContext context) {
@@ -107,7 +108,16 @@ class _AddRecipeState extends State<AddRecipe> {
   }
 
   _submitIngredient() {
-    submittedIngredients.add(IngredientUsed(id: id, ingredientName: ingredient, quantity: int.parse(quantity), unit: units));
+    submittedIngredients.add(
+        IngredientUsed(id: id,
+            ingredientName: ingredient,
+            quantity: int.parse(quantity),
+            unit: unit
+        ));
+    id = 0;
+    ingredient = '';
+    quantity = '';
+    unit = '';
     quantController.clear();
     unitsController.clear();
     searchTextField.clear();
@@ -136,6 +146,7 @@ class _AddRecipeState extends State<AddRecipe> {
         ),)),
       Padding(padding: const EdgeInsets.fromLTRB(10, 5, 10, 10),
         child: TextField(
+          textCapitalization: (title == "Title:") ? TextCapitalization.words : TextCapitalization.none,
           onChanged: (text) => (title == "Title:") ? recipeName = text : image = text,
         decoration: InputDecoration(
           enabledBorder: OutlineInputBorder(
@@ -175,6 +186,7 @@ class _AddRecipeState extends State<AddRecipe> {
               child: SizedBox(
                 height: 200.0,
                 child: new TextField(
+                  textCapitalization: TextCapitalization.sentences,
                   onChanged: (text) => directions = text,
                   maxLines: 100,
                   decoration: new InputDecoration(
@@ -213,12 +225,14 @@ class _AddRecipeState extends State<AddRecipe> {
     ],);
   }
 
-  //i.e. quant unit
+  //i.e. quant/unit
   Widget _smallSectionInIngredient(String searchField, double width) {
     return Container(
       width: MediaQuery.of(context).size.width*width,
-      child: Padding(padding: const EdgeInsets.all(2.0), child:TextField(
-        decoration: InputDecoration(
+      child: Padding(padding: const EdgeInsets.all(2.0),
+        child:TextField(
+          keyboardType: (searchField == "Quant") ? TextInputType.number : TextInputType.text,
+         decoration: InputDecoration(
           enabledBorder: OutlineInputBorder(
               borderSide: BorderSide(color: Colors.teal),
               borderRadius: BorderRadius.all(Radius.circular(10.0))),
@@ -230,7 +244,7 @@ class _AddRecipeState extends State<AddRecipe> {
           hintStyle: TextStyle(color: Colors.black),
         ),
         onChanged: (text) {
-          searchField == "Quant" ? quantity = text : units = text;
+          searchField == "Quant" ? quantity = text : unit = text;
         },
         controller: searchField == "Quant" ? quantController : unitsController,
       ),),);

@@ -229,6 +229,7 @@ class _AddIngredientState extends State<AddIngredient> {
                 );
               },
             ).then((date) {
+              if (date == null) return;
               setState(() {
                 widget.expiryDate = date;
                 widget.callbackExpiry(date);
@@ -317,6 +318,7 @@ class _AddIngredientState extends State<AddIngredient> {
                   );
                 }
               ).then((time) {
+                if (time == null) return;
                 setState(() {
                   widget.time = time;
                   widget.callbackTime(time);
