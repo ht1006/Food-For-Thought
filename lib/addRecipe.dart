@@ -1,18 +1,19 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:autocomplete_textfield/autocomplete_textfield.dart';
 import 'ingredients.dart';
 import 'recipes.dart';
 import 'database.dart';
+import 'utils.dart';
 
 /// Add recipe page
 class AddRecipe extends StatefulWidget {
-
   @override
   _AddRecipeState createState() => new _AddRecipeState();
 }
 
 class _AddRecipeState extends State<AddRecipe> {
-
+  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   List<IngredientUsed> submittedIngredients = [];
   final TextEditingController quantController = new TextEditingController();
   final TextEditingController unitsController = new TextEditingController();
@@ -23,12 +24,13 @@ class _AddRecipeState extends State<AddRecipe> {
 
   int id = 0;
   String ingredient = '';
-  String quantity = '';
+  String quantity = '0';
   String unit = '';
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+        key: _scaffoldKey,
         appBar: AppBar(
           backgroundColor: Colors.teal,
           title: Text(
@@ -98,7 +100,10 @@ class _AddRecipeState extends State<AddRecipe> {
                     _addDirection(),
                     RaisedButton(child: Text("Submit the Recipe",
                       style: TextStyle(fontSize: 18),),
-                      onPressed: () {_submitRecipe();},
+                      onPressed: () {
+                        _submitRecipe();
+                        Navigator.pop(context);
+                      },
                       color: Colors.teal,
                       padding: EdgeInsets.all(20),
                       textColor: Colors.white,
@@ -108,6 +113,11 @@ class _AddRecipeState extends State<AddRecipe> {
   }
 
   _submitIngredient() {
+    if (ingredient.isEmpty) {
+      showSnackBar(_scaffoldKey, 'Invalid ingredient');
+      return;
+    }
+
     submittedIngredients.add(
         IngredientUsed(id: id,
             ingredientName: ingredient,
@@ -116,7 +126,7 @@ class _AddRecipeState extends State<AddRecipe> {
         ));
     id = 0;
     ingredient = '';
-    quantity = '';
+    quantity = '0';
     unit = '';
     quantController.clear();
     unitsController.clear();

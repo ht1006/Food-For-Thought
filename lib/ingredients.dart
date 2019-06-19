@@ -357,25 +357,16 @@ bool _isValidIngredient(GlobalKey<ScaffoldState> key, String newIngredient, List
 ownedList) {
   bool isValid = true;
   if (newIngredient.isEmpty) {
-    _showSnackBar(key, 'Please select an ingredient from the list');
+    showSnackBar(key, 'Please select an ingredient from the list');
     isValid = false;
   }
   if (ownedList.contains(newIngredient)) {
-    _showSnackBar(key, 'Ingredient already added');
+    showSnackBar(key, 'Ingredient already added');
     isValid = false;
   }
   return isValid;
 }
 
-// Snackbar
-void _showSnackBar(GlobalKey<ScaffoldState> key, String text) {
-  key.currentState.showSnackBar(
-      SnackBar(
-        content: Text(text),
-        duration: Duration(seconds: 2),
-      )
-  );
-}
 
 // Retrieves the Ingredient element matching the given newIngredient
 Ingredient getIngredientElement(String newIngredient) {

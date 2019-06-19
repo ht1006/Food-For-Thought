@@ -177,11 +177,10 @@ void uploadNewRecipe(Recipe recipe) {
 }
 
 // Send an http post request to the database
-Future<List> _postRequest(Map param) async {
+Future _postRequest(Map param) async {
   Uri uri = Uri.parse('https://fft-group3.herokuapp.com/').replace(queryParameters: param);
   http.Response resp = await http.post(uri, headers: {HttpHeaders.contentTypeHeader: "application/json"} );
-  if (resp.statusCode == 200) {
-    return json.decode(resp.body);
+  if (resp.statusCode != 200) {
+    throw Exception('Failed to upload recipe');
   }
-  throw Exception('Failed to upload recipe');
 }

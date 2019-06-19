@@ -48,3 +48,13 @@ DateTime getNormalisedCurrentDate() {
   return DateTime(now.year, now.month, now.day);
 }
 
+// Snackbar
+void showSnackBar(GlobalKey<ScaffoldState> key, String text) {
+  key.currentState.showSnackBar(
+      SnackBar(
+        content: Text(text),
+        duration: Duration(seconds: 2),
+      )
+  );
+}
+
